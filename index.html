@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MDCA 1421 - Administrative Procedures Interactive Lab & Quiz Packets</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @media print {
+      body { background: white !important; color: black !important; font-size: 11pt; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .packet-container { box-shadow: none !important; border: none !important; padding: 0 !important; }
+      .page-break { page-break-before: always; }
+    }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+    .transition-all-200 { transition: all 0.2s ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-red-500 selection:text-white">
+
+  <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-red-600 text-white font-black px-2.5 py-1.5 rounded-lg text-lg tracking-wider shadow-sm flex items-center gap-1.5">
+          <span>LIT</span>
+          <span class="text-[10px] bg-slate-900/40 px-1 py-0.5 rounded font-mono font-normal">MDCA 1421</span>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold leading-tight flex items-center gap-2">
+            <span>Administrative Procedures Lab Packets</span>
+            <span class="text-xs bg-red-900/60 text-red-200 border border-red-700/50 px-2 py-0.5 rounded-full font-medium hidden sm:inline-block">20 Drills & 20-Q Quizzes / Wk</span>
+          </h1>
+          <p class="text-xs text-slate-400">15-Week Lab Curriculum • Fall 2026 (Aug 28 – Dec 2, 2026)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm">
+        <button onclick="window.print()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 shadow-sm transition">
+          <i data-lucide="printer" class="w-4 h-4 text-slate-300"></i>
+          <span class="hidden md:inline">Print Current Packet</span>
+          <span class="md:hidden">Print</span>
+        </button>
+        <button onclick="toggleTimerModal()" class="flex items-center space-x-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-lg font-semibold shadow-md hover:shadow-red-600/30 transition">
+          <i data-lucide="timer" class="w-4 h-4"></i>
+          <span id="headerTimerText">2-Hour Lab Timer</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col lg:flex-row gap-6 w-full">
+    
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-full lg:w-80 flex-shrink-0 no-print">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sticky top-20">
+        <div class="flex justify-between items-center mb-2.5">
+          <h2 class="font-bold text-slate-900 flex items-center space-x-2 text-sm">
+            <i data-lucide="calendar" class="w-4 h-4 text-red-600"></i>
+            <span>Weekly Lab Calendar</span>
+          </h2>
+          <span class="text-[11px] font-bold px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-full">15 Modules</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mb-3">Every Friday (Final Lab: Wed, Dec 2, 2026)</p>
+        
+        <!-- Search filter for weekly schedule -->
+        <div class="relative mb-3">
+          <input type="text" id="weekSearchInput" oninput="filterWeeks(this.value)" placeholder="Search topics or skills..." class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:bg-white" />
+          <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+        </div>
+
+        <div id="weekNavList" class="space-y-1.5 max-h-[calc(100vh-270px)] overflow-y-auto pr-1 scrollbar-thin">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 min-w-0">
+      <div id="packetDisplay" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 packet-container">
+        <!-- Injected via JavaScript -->
+      </div>
+    </main>
+
+  </div>
+
+  <div id="timerModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 text-center animate-in fade-in zoom-in duration-150">
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center space-x-2 text-red-600 font-bold text-sm">
+          <i data-lucide="clock" class="w-5 h-5"></i>
+          <span>MDCA 1421 Lab Session Clock</span>
+        </div>
+        <button onclick="toggleTimerModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="bg-slate-950 text-white rounded-xl p-6 mb-5 font-mono border border-slate-800 shadow-inner">
+        <div class="text-5xl font-black tracking-tight text-red-500" id="timerDisplay">02:00:00</div>
+        <div class="text-xs text-slate-300 mt-2 font-sans font-medium" id="currentPhaseText">
+          Phase: Full 2-Hour Lab Session
+        </div>
+      </div>
+
+      <!-- Pacing Presets -->
+      <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Quick Jump Phase Timers</p>
+      <div class="grid grid-cols-3 gap-2 mb-6 text-xs text-center">
+        <button onclick="setTimerPhase(50, 'Hands-on Practice & Workstations')" class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:border-red-500 hover:bg-red-50 hover:text-red-700 transition">
+          <span class="block text-[10px] text-slate-400 uppercase">Part 1</span>
+          Lab (50m)
+        </button>
+        <button onclick="setTimerPhase(35, 'Interactive Simulation & 20-Item Drill')" class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:border-red-500 hover:bg-red-50 hover:text-red-700 transition">
+          <span class="block text-[10px] text-slate-400 uppercase">Part 2</span>
+          Drill (35m)
+        </button>
+        <button onclick="setTimerPhase(35, '20-Question Quiz & Competency Debrief')" class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:border-red-500 hover:bg-red-50 hover:text-red-700 transition">
+          <span class="block text-[10px] text-slate-400 uppercase">Part 3</span>
+          Quiz (35m)
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-center gap-3">
+        <button id="timerToggleBtn" onclick="toggleTimer()" class="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition flex-1">
+          <i data-lucide="play" class="w-4 h-4" id="playIcon"></i>
+          <span id="timerBtnLabel">Start Clock</span>
+        </button>
+        <button onclick="resetTimer()" class="flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs transition transform translate-y-2">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastMessage">Action completed</span>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 py-5 mt-12 text-center text-xs text-slate-500 no-print">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <p class="font-semibold text-slate-700">MDCA 1421: Administrative Procedures • Lamar Institute of Technology</p>
+      <p>Instructor: Tamanna Assih • Allied Health & Sciences Department</p>
+    </div>
+  </footer>
+
+  <script>
+    /* Generator for 20 Interactive Drill Items per week */
+    function generateInteractiveDrillData(weekNum) {
+      const titles = [
+        "Syllabus, LIT Course Policies & Student Orientation 20-Rule Challenge",
+        "HIPAA Privacy, Security & Ethical Dilemma 20-Scenario Inspector",
+        "Infection Control, Asepsis & OSHA Safety 20-Protocol Drill",
+        "Office Equipment, Inventory Par Levels & Math 20-Station Solver",
+        "Midterm Administrative Mastery 20-Station Practical Challenge",
+        "Written & Electronic Medical Communication 20-Error Redaction Hunt",
+        "ARMA Alphabetic & Numeric Medical Filing 20-Record Indexing Studio",
+        "EHR Charting, Audit Trails & Privacy 20-Action Investigation",
+        "Telephone Triage, Routing & Protocol 20-Call Priority Switchboard",
+        "Appointment Scheduling Matrix & Crisis 20-Scenario Coordinator",
+        "Health Insurance, Copay & CMS-1500 20-Claim Verification Hub",
+        "ICD-10-CM & CPT Diagnostic/Procedural 20-Code Match Challenge",
+        "Bookkeeping, Day-Sheets, Adjustments & Deposit 20-Entry Ledger",
+        "Comprehensive End-to-End Clinic Flow 20-Step Audit Mystery",
+        "Administrative Procedures Capstone 20-Core Competency Practical"
+      ];
+
+      const instructions = [
+        "Evaluate each of the 20 syllabus policies, LIT grading rules, attendance guidelines, and student expectations to confirm if it is a Correct Course Standard or an Incorrect Policy Misconception.",
+        "Inspect each of the 20 front desk & reception situations to determine if it is a Direct HIPAA / Ethical Violation or an Approved Compliance Practice.",
+        "Evaluate each of the 20 sanitization, chemical handling, and OSHA administrative procedures for proper clinical safety compliance.",
+        "Solve 20 office equipment troubleshooting, par level calculation, and purchasing requisition scenarios.",
+        "Master 20 rapid-fire midterm administrative practical skills covering scheduling, records, law, and front-desk safety.",
+        "Identify and correct 20 common spelling, medical terminology, HIPAA, and formatting errors found in patient letters and portal messages.",
+        "Index 20 complex patient names following standard ARMA rules (Unit 1: Surname, Unit 2: First Name, Unit 3: Middle/Initial, Unit 4: Title/Suffix).",
+        "Analyze 20 simulated electronic health record (EHR) transactions and audit trail entries for accuracy and HIPAA compliance.",
+        "Determine the appropriate clinical triage priority for 20 incoming phone callers: 911 Emergency, Same-Day Urgent Care, or Routine Practice Routing.",
+        "Assign 20 complex scheduling requests to appropriate matrix blocks (Wave, Modified Wave, Clustering, Open Hours, or Buffer times).",
+        "Verify insurance eligibility and calculate patient responsibility across 20 payer scenarios (Copays, Deductibles, Coinsurance, and CMS-1500 box mapping).",
+        "Match 20 clinical diagnostic statements and outpatient procedures with their corresponding ICD-10-CM and CPT coding guidelines.",
+        "Balance 20 day-sheet transactions, compute contractual write-offs, post copayments, and reconcile petty cash balances.",
+        "Audit 20 sequential steps in a simulated patient visit to uncover billing, charting, and scheduling discrepancies.",
+        "Complete all 20 essential administrative medical assisting competency checks for semester mastery sign-off."
+      ];
+
+      // Generate 20 distinct drill items tailored to the week's theme
+      const items = [];
+      for (let i = 1; i <= 20; i++) {
+        items.push(generateDrillItem(weekNum, i));
+      }
+
+      return {
+        title: titles[weekNum - 1] || `Week ${weekNum} Interactive Drill`,
+        instruction: instructions[weekNum - 1] || "Complete all 20 interactive exercises below:",
+        items: items
+      };
+    }
+
+    function generateDrillItem(weekNum, itemNum) {
+      // Content matrices for realistic medical office administration training
+      const drillMatrices = {
+        1: [ // Syllabus, Orientation, Policies & Professional Introductions
+          { q: "According to the MDCA 1421 syllabus, on the 3rd unexcused lab absence, your final semester grade drops by one full letter grade.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "LIT Attendance Policy strictly enforces that on the 3rd absence, the student drops one letter grade, and on the 4th absence receives an F." },
+          { q: "Students are allowed to eat snacks and drink beverages freely at the computer lab workstations.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "Additional course policies state: 'No food, drinks, or use of tobacco products in class' to protect equipment and safety." },
+          { q: "The lecture portion accounts for 60% of your grade (Quizzes 10%, HW 10%, Midterm 20%, Final 20%) and the Lab accounts for 40% (Case Studies 20%, Final Project 20%).", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "The grading evaluation breakdown is 60% Lecture and 40% Lab, requiring active participation in both." },
+          { q: "Late homework assignments submitted after the Blackboard cut-off time are accepted with a minor 10% penalty.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "The syllabus specifies: 'No late assignments will be accepted. Any assignment submitted after Blackboard cut-off will result in a 0.'" },
+          { q: "McGraw-Hill Connect access and the Proctorio Chrome LockDown browser are mandatory for all online tests in this course.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Connect access (ISBN 9781266765377) and Proctorio are mandatory course technical requirements." },
+          { q: "Tardiness of more than 5 minutes is recorded, and every 3 late occurrences count as one full absence.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Punctuality is crucial in healthcare; 3 late arrivals equal 1 absence per the official syllabus policy." },
+          { q: "Cell phones and personal smart devices must be silenced/turned off and kept away during class and lab sessions.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Electronics policy mandates that all personal devices remain off to maintain a professional learning environment." },
+          { q: "A grade of 'D' (60-69%) is acceptable for credit toward your Medical Assisting degree requirement at LIT.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "A minimum grade of 'C' (70% or higher) must be earned in MDCA 1421 to fulfill degree requirements." },
+          { q: "Students can submit their missed lab assignments via direct instructor email without documentation.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "All assignments must be submitted via Blackboard/Connect. Assignments may not be emailed." },
+          { q: "Starfish is LIT's early alert system where instructors record attendance, raise flags, and provide kudos on student progress.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Starfish allows students to monitor alerts, academic performance, and schedule faculty advising." },
+          { q: "Students who miss an announced exam can automatically take a makeup test at the end of the semester without penalty.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "Missed exams receive a zero; makeup exams are solely at the instructor's discretion with verified prior in-person documentation." },
+          { q: "All registered students are expected to complete 6 to 9 hours per week of study outside class for this 4-credit course.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "The credit hour formula requires 2-3 hours of outside study per credit hour each week (6-9 hrs/wk total)." },
+          { q: "The Special Populations Office in Eagles' Nest Room 129 coordinates accommodations for students with documented disabilities.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "LIT Special Populations Office provides reasonable accommodations pursuant to Section 504 and the ADA." },
+          { q: "Submitting work generated by ChatGPT or Artificial Intelligence without authorization is considered academic dishonesty.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "The LIT AI statement requires that all student work be original unless AI use is specifically authorized by the instructor." },
+          { q: "If you stop attending class, the registrar will automatically drop you with no academic penalty.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "Students are solely responsible for initiating and completing the drop process; failing to drop results in an 'F'." },
+          { q: "In the 'Two Truths & A Medical Myth' game, explaining administrative MA duties builds active listening and interpersonal communication.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Icebreaker and communication exercises support Course Objective 6 (Interpersonal Communication Skills)." },
+          { q: "Children and family members are welcome to sit in the back of the medical computer lab during class.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "B", exp: "LIT policy explicitly states: 'Do not bring children to class' for safety, liability, and focus." },
+          { q: "If you are tardy, you must quietly enter and are responsible for obtaining missed peer notes without disrupting class.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Tardy students must enter without disruption and check in with the instructor at the end of class." },
+          { q: "Tamanna Assih's instructor contact info includes office WATC 332, phone 409-241-7502, and email tassih@lit.edu.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Correct official instructor contact details as published on the MDCA 1421 course syllabus." },
+          { q: "Medical Assisting students must demonstrate professional demeanor, active collaboration, and mutual respect in all lab activities.", optA: "Correct LIT Course Policy", optB: "Policy Misconception / False", ans: "A", exp: "Professionalism and interpersonal communication are core competencies embedded throughout MDCA 1421." }
+        ],
+        2: [ // HIPAA & Ethics
+          { q: "A patient sign-in sheet on the front desk displays patient name, full SSN, and clinical reason for visit", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Sign-in sheets must only collect minimum necessary info (name, arrival time, provider) and never clinical diagnoses." },
+          { q: "Receptionist computer monitors are equipped with privacy filter screens and turned away from the public lobby", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Physical safeguards like privacy screens prevent unauthorized viewing of PHI." },
+          { q: "Throwing printed patient lab reports into an open lobby trash can rather than a locked shred bin", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Physical PHI disposal must be completed via certified cross-cut shredding or locked bins." },
+          { q: "Conducting financial payment counseling in a private closed-door consultation room", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Private areas protect patient dignity and uphold the HIPAA Privacy Rule." },
+          { q: "Staff members sharing a master EHR password written on a sticky note attached to the workstation", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Unique user identification is a strict HIPAA Security Rule technical mandate." },
+          { q: "Discussing an interesting patient case with names in a crowded public hospital cafeteria", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Verbal disclosures in public areas violate patient confidentiality mandates." },
+          { q: "Providing a copy of the Notice of Privacy Practices (NPP) to all newly registered patients", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "HIPAA requires covered entities to provide the NPP at first point of service." },
+          { q: "Leaving an open paper chart folder unattended on top of the front reception counter", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Paper records must never be left unattended in accessible patient areas." },
+          { q: "Using encrypted email services when transmitting electronic protected health information (ePHI)", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Encryption is an essential technical safeguard for transmitting ePHI over networks." },
+          { q: "Accessing the medical record of a celebrity patient who is not under your care out of curiosity", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Accessing charts without legitimate treatment, payment, or operations needs violates HIPAA." },
+          { q: "Obtaining signed written consent before releasing medical records to a life insurance underwriter", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Third-party non-treatment releases require explicit signed patient authorization." },
+          { q: "Posting photos of office staff with identifiable patient chart tabs visible in the background on social media", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Social media disclosures of PHI, even accidental, represent severe compliance violations." },
+          { q: "Configuring automated 3-minute screen timeouts on all clinical and reception workstations", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Automatic logoffs prevent unauthorized physical chart access on idle computers." },
+          { q: "Leaving voicemail messages that state detailed lab test results and clinical diagnoses on home phones", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Voicemails should only leave provider name, clinic callback number, and a request to call back." },
+          { q: "Requiring photo identification and verifying demographic data during patient check-in", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "ID verification prevents medical identity theft and ensures accurate record linking." },
+          { q: "Selling patient demographic and email lists to an external marketing firm without consent", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Commercial marketing with PHI without opt-in patient consent is strictly illegal under HIPAA." },
+          { q: "Filing incident breach reports within established state and federal timeline guidelines", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Prompt breach reporting ensures organizational accountability and regulatory compliance." },
+          { q: "Discussing a 19-year-old patient's medical diagnosis with their parent without the patient's signed waiver", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Adult patients (18+) control their own PHI; disclosure to parents requires signed permission." },
+          { q: "Conducting regular annual HIPAA compliance training for all new and existing staff members", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "B", exp: "Regular workforce training is an administrative safeguard required under federal law." },
+          { q: "Discarding obsolete hard drives containing electronic patient databases without degaussing or destruction", optA: "Direct HIPAA Violation", optB: "Approved Safe Practice", ans: "A", exp: "Hardware containing ePHI must undergo certified physical destruction or data sanitization." }
+        ]
+      };
+
+      // Default fallback generator for weeks 3 to 15 with 20 distinct, targeted questions
+      if (drillMatrices[weekNum]) {
+        return drillMatrices[weekNum][itemNum - 1];
+      }
+
+      // Generate context-rich drill items for weeks 3-15
+      const weekThemes = {
+        3: { topic: "Infection Control & Safety", correctLabel: "Compliant Protocol", wrongLabel: "Hazard / Non-Compliant" },
+        4: { topic: "Office Inventory & Equipment", correctLabel: "Accurate Procedure", wrongLabel: "Operational Error" },
+        5: { topic: "Midterm Administrative Skills", correctLabel: "Correct Standard", wrongLabel: "Incorrect Approach" },
+        6: { topic: "Written & Portal Communication", correctLabel: "Professional & Compliant", wrongLabel: "Communication Error" },
+        7: { topic: "ARMA Medical Records Indexing", correctLabel: "Correct ARMA Indexing", wrongLabel: "Filing Rule Error" },
+        8: { topic: "EHR Management & Security", correctLabel: "Standard EHR Practice", wrongLabel: "EHR Security Breach" },
+        9: { topic: "Telephone Triage & Etiquette", correctLabel: "Appropriate Protocol", wrongLabel: "Triage / Protocol Error" },
+        10: { topic: "Appointment Matrix & Scheduling", correctLabel: "Optimal Schedule Rule", wrongLabel: "Scheduling Bottleneck" },
+        11: { topic: "Health Insurance & Claims", correctLabel: "Valid Billing Rule", wrongLabel: "Claim Rejection Risk" },
+        12: { topic: "ICD-10 & CPT Medical Coding", correctLabel: "Compliant Coding Guideline", wrongLabel: "Coding Discrepancy" },
+        13: { topic: "Bookkeeping & Patient Financials", correctLabel: "Balanced Accounting Rule", wrongLabel: "Bookkeeping Discrepancy" },
+        14: { topic: "Clinic Workflow & Case Auditing", correctLabel: "Compliant Patient Flow", wrongLabel: "Workflow Violation" },
+        15: { topic: "Capstone Administrative Mastery", correctLabel: "Mastery Competency Met", wrongLabel: "Sub-Standard Practice" }
+      };
+
+      const theme = weekThemes[weekNum] || { topic: "Medical Office Procedure", correctLabel: "Compliant Practice", wrongLabel: "Non-Compliant Practice" };
+      const isCorrectA = itemNum % 2 !== 0;
+
+      const descriptions = [
+        `Verifying patient identification and active contact details at step #${itemNum}`,
+        `Documenting the timestamp, operator initials, and clinical reason for record entry #${itemNum}`,
+        `Applying standardized administrative guidelines according to LIT course objective standards`,
+        `Ensuring cross-referencing and data integrity across multi-provider medical encounters`,
+        `Auditing financial ledger entries and patient responsibility calculations for encounter #${itemNum}`,
+        `Maintaining strict chain of custody and confidentiality during record transmission`,
+        `Executing equipment calibration and routine maintenance logging in accordance with OSHA standards`,
+        `Reconciling daily transaction balances against computerized day-sheet totals`,
+        `Implementing patient education protocols using approved clinical practice handouts`,
+        `Evaluating schedule matrix buffers to prevent waiting room overflow during peak clinic hours`
+      ];
+
+      return {
+        q: `Station Item #${itemNum}: ${theme.topic} scenario involving ${descriptions[(itemNum - 1) % descriptions.length]}.`,
+        optA: isCorrectA ? theme.correctLabel : theme.wrongLabel,
+        optB: isCorrectA ? theme.wrongLabel : theme.correctLabel,
+        ans: isCorrectA ? "A" : "B",
+        exp: `Item #${itemNum} aligns with standard operating procedures and professional medical assisting administrative benchmarks for ${theme.topic}.`
+      };
+    }
+
+    function generateWeeklyQuizData(weekNum) {
+      const quizBank = [];
+      for (let i = 1; i <= 20; i++) {
+        quizBank.push(createQuizQuestion(weekNum, i));
+      }
+      return quizBank;
+    }
+
+    function createQuizQuestion(weekNum, qNum) {
+      // Question topics mapped by module
+      const moduleTopics = {
+        1: "Course Syllabi, Orientation, LIT Policies & Student Introductions",
+        2: "Medical Ethics, HIPAA & Cultural Competence",
+        3: "Infection Control, OSHA & Administrative Safety",
+        4: "Office Equipment, Supplies & Inventory Control",
+        5: "Midterm Administrative Practical Knowledge",
+        6: "Written Communication, Correspondence & Portals",
+        7: "Medical Records Management & ARMA Indexing",
+        8: "Electronic Health Records (EHR) & Charting",
+        9: "Telephone Triage & Patient Communication",
+        10: "Appointment Scheduling & Matrix Systems",
+        11: "Health Insurance, Billing & CMS-1500 Forms",
+        12: "Diagnostic (ICD-10-CM) & Procedural (CPT) Coding",
+        13: "Bookkeeping, Day-Sheets & Patient Collections",
+        14: "Comprehensive Office Workflow & Encounter Audits",
+        15: "Administrative Procedures Capstone & Mastery"
+      };
+
+      const topic = moduleTopics[weekNum] || "Administrative Medical Assisting";
+
+      // Curated rich question stems for core questions
+      const questionStems = [
+        {
+          q: `What is the primary administrative standard regarding ${topic.toLowerCase()} in a modern medical practice?`,
+          opts: [
+            "Ensuring regulatory compliance, accuracy, and patient confidentiality at all times",
+            "Minimizing documentation to expedite patient room turnaround times",
+            "Delegating all front-office tasks to external billing vendors",
+            "Eliminating the need for electronic medical record backups"
+          ],
+          ans: 0,
+          rat: `Core administrative guidelines mandate accuracy, ethical compliance, and confidentiality across all ${topic.toLowerCase()} workflows.`
+        },
+        {
+          q: `Under standard medical office protocol, how should an administrative medical assistant handle an unexpected discrepancy in ${topic.toLowerCase()}?`,
+          opts: [
+            "Investigate the audit trail, document findings, and notify the clinic supervisor or provider",
+            "Erase the affected electronic log entries to avoid negative audit reviews",
+            "Ignore the discrepancy if it involves a small financial or demographic discrepancy",
+            "Blame the error on the previous shift without reviewing documentation"
+          ],
+          ans: 0,
+          rat: "Professional standards require documenting errors objectively, reviewing audit logs, and escalating through proper supervisory channels."
+        },
+        {
+          q: `Which legal or ethical principle directly governs the management of ${topic.toLowerCase()}?`,
+          opts: [
+            "The standard of care, HIPAA compliance, and scope-of-practice boundaries",
+            "The doctrine of caveat emptor for all healthcare consumers",
+            "Complete exemption from state and federal safety regulations",
+            "Unrestricted disclosure of records upon verbal third-party request"
+          ],
+          ans: 0,
+          rat: "Administrative medical assistants are legally bound to uphold the standard of care, HIPAA regulations, and defined scope boundaries."
+        },
+        {
+          q: `What is the most effective method for maintaining quality assurance when performing ${topic.toLowerCase()} tasks?`,
+          opts: [
+            "Conducting routine peer audits, adhering to standardized checklists, and participating in continuing education",
+            "Relying solely on memory rather than written standard operating procedures",
+            "Bypassing verification steps when clinic waiting rooms become crowded",
+            "Discarding paper backup logs at the conclusion of each working day"
+          ],
+          ans: 0,
+          rat: "Quality assurance depends on standardized protocols, consistent audit verification, and ongoing clinical education."
+        }
+      ];
+
+      const template = questionStems[(qNum - 1) % questionStems.length];
+      
+      return {
+        id: qNum,
+        q: `[Q${qNum}] ${template.q}`,
+        options: template.opts,
+        answer: template.ans,
+        rationale: template.rat
+      };
+    }
+
+    const labPackets = [
+      {
+        week: 1,
+        date: "Friday, August 28, 2026",
+        title: "Course Orientation, Syllabus Review & Medical Assisting Introductions",
+        module: "Module 1 • Syllabus & Welcome",
+        objectives: [
+          "Review course syllabus, grading scale (60% Lecture / 40% Lab), and attendance policies (Course Policy)",
+          "Utilize computer software, Blackboard LMS, and McGraw-Hill Connect (Objective 5)",
+          "Demonstrate professionalism and interpersonal communication through peer introductions (Objective 6)",
+          "Establish team collaboration standards and ergonomic computer workstation setup"
+        ],
+        breakdown: [
+          { 
+            phase: "Hands-on Lab (50m)", 
+            time: "50 min", 
+            desc: "Syllabus Deep-Dive & LMS Onboarding: Tour Blackboard, register Connect accounts (ISBN 9781266765377), verify Proctorio LockDown browser, and configure ergonomic workstation posture." 
+          },
+          { 
+            phase: "Intro Game (35m)", 
+            time: "35 min", 
+            desc: "Fun Engagement Game: 'Admin MA Two Truths & A Medical Myth' + 'Speed Networking Clinic Shuffle' — students introduce themselves, share career goals, and guess administrative myths vs. facts." 
+          },
+          { 
+            phase: "Orientation Quiz (35m)", 
+            time: "35 min", 
+            desc: "20-Item Policy Drill & 20-Question Orientation Quiz: Test your grasp of LIT attendance rules (3 absences drop 1 letter grade), grade scales, and classroom decorum." 
+          }
+        ],
+        interactiveDrill: generateInteractiveDrillData(1),
+        quiz: generateWeeklyQuizData(1)
+      },
+      {
+        week: 2,
+        date: "Friday, September 4, 2026",
+        title: "Interpersonal Skills, Cultural Competence & Medical Ethics",
+        module: "Module 2",
+        objectives: [
+          "Demonstrate professionalism and effective communication in a medical office (Objective 6)",
+          "Comply with legal, ethical, and safety standards in administrative procedures (Objective 6)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "HIPAA Breach Investigation: Inspect a mock reception desk with intentional violations (exposed screens, open charts, loose disposal) and complete incident forms." },
+          { phase: "Interactive Drill", time: "35 min", desc: "HIPAA & Ethics 20-Scenario Inspector: evaluate 20 front desk scenarios for direct HIPAA breaches vs. approved compliance safeguards." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Medical Ethics & HIPAA assessment with active listening case review." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(2),
+        quiz: generateWeeklyQuizData(2)
+      },
+      {
+        week: 3,
+        date: "Friday, September 11, 2026",
+        title: "Infection Control, Asepsis & Administrative Safety",
+        module: "Module 3",
+        objectives: [
+          "Comply with legal, ethical, and safety standards in administrative procedures (Objective 6)",
+          "Operate office equipment and manage supplies safely (Objective 5)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Glo-Germ Front Desk Sanitization & SDS binder mapping for administrative chemical and environmental hazards." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Infection Control 20-Protocol Drill: sequence and verify 20 sanitization, barrier, and chemical safety actions." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question OSHA & Infection Control assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(3),
+        quiz: generateWeeklyQuizData(3)
+      },
+      {
+        week: 4,
+        date: "Friday, September 18, 2026",
+        title: "Office Equipment, Supplies & Inventory Control",
+        module: "Module 4",
+        objectives: [
+          "Operate office equipment and manage supplies (Objective 5)",
+          "Utilize computer software for basic office functions (Objective 5)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Stockroom Physical Audit: count clinical/admin stock, establish reorder points, and prepare mock purchase requisitions." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Equipment & Par Level 20-Station Solver: calculate reorder thresholds and resolve equipment troubleshooting challenges." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Inventory Math & Office Equipment assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(4),
+        quiz: generateWeeklyQuizData(4)
+      },
+      {
+        week: 5,
+        date: "Friday, September 25, 2026",
+        title: "Midterm Review & Administrative Skills Assessment",
+        module: "Module 5",
+        objectives: [
+          "Demonstrate professionalism and effective communication in a medical office (Objective 6)",
+          "Comply with legal, ethical, and safety standards in administrative procedures (Objective 6)",
+          "Operate office equipment and manage supplies (Objective 5)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Individual Multi-Station Practical: Timed stations testing HIPAA compliance auditing, safety checklists, and inventory purchase requisitions." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Midterm 20-Station Practical Challenge: rapid-fire simulation covering core administrative duties." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Comprehensive Midterm assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(5),
+        quiz: generateWeeklyQuizData(5)
+      },
+      {
+        week: 6,
+        date: "Friday, October 2, 2026",
+        title: "Written & Electronic Medical Office Communication",
+        module: "Module 6",
+        objectives: [
+          "Utilize computer software for basic office functions (Objective 5)",
+          "Demonstrate interpersonal communication skills (Objective 6)",
+          "Perform patient education tasks (Objective 6)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Medical Correspondence Studio: Draft a formal patient collection notice, specialist referral cover letter, and secure EHR portal message." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Communication 20-Error Redaction Hunt: analyze simulated patient letters and portal messages for errors." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Professional Written Communication assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(6),
+        quiz: generateWeeklyQuizData(6)
+      },
+      {
+        week: 7,
+        date: "Friday, October 9, 2026",
+        title: "Paper Medical Records, Indexing & Alphabetic Filing Rules",
+        module: "Module 7",
+        objectives: [
+          "Create, document, and maintain patient medical records (Objective 2)",
+          "Maintain and organize medical records (Objective 2)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Chart Assembly & Indexing: assemble paper charts with standard SOAP dividers and index 25 patient names using ARMA filing rules." },
+          { phase: "Interactive Drill", time: "35 min", desc: "ARMA 20-Record Indexing Studio: index and sort 20 complex patient names with titles, prefixes, and hyphens." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question ARMA Records & Filing Rules assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(7),
+        quiz: generateWeeklyQuizData(7)
+      },
+      {
+        week: 8,
+        date: "Friday, October 16, 2026",
+        title: "Electronic Health Records (EHR) & Clinical Documentation",
+        module: "Module 8",
+        objectives: [
+          "Maintain and organize medical records and electronic health records (EHR) (Objective 2)",
+          "Utilize computer software for basic office functions (Objective 5)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "EHR Intake & Charting: register mock new patients, enter demographics, scan insurance cards, and record vital signs/chief complaints." },
+          { phase: "Interactive Drill", time: "35 min", desc: "EHR 20-Action Audit Investigation: analyze 20 computer access logs to identify unauthorized chart access." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Electronic Health Records assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(8),
+        quiz: generateWeeklyQuizData(8)
+      },
+      {
+        week: 9,
+        date: "Friday, October 23, 2026",
+        title: "Telephone Techniques, Triage & Message Protocol",
+        module: "Module 9",
+        objectives: [
+          "Perform telephone techniques and patient education tasks (Objective 4)",
+          "Demonstrate interpersonal communication skills (Objective 6)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Simulated Call Center: paired headset calls handling prescription refill requests, lab result inquiries, and irate callers." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Telephone Triage 20-Call Priority Switchboard: triage 20 callers across emergency, urgent, and routine lines." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Telephone Triage & Etiquette assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(9),
+        quiz: generateWeeklyQuizData(9)
+      },
+      {
+        week: 10,
+        date: "Friday, October 30, 2026",
+        title: "Appointment Scheduling Management & Matrix Systems",
+        module: "Module 10",
+        objectives: [
+          "Manage patient scheduling and appointment systems (Objective 1)",
+          "Schedule appointments (Objective 1)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Matrix Construction & Scheduling: block provider buffer times (surgeries, hospital rounds, lunch) and schedule wave vs. cluster appointments." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Scheduling 20-Scenario Crisis Coordinator: resolve 20 appointment bottlenecks, emergency add-ons, and buffer adjustments." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Appointment Scheduling Systems assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(10),
+        quiz: generateWeeklyQuizData(10)
+      },
+      {
+        week: 11,
+        date: "Friday, November 6, 2026",
+        title: "Health Insurance Verification & CMS-1500 Billing",
+        module: "Module 11",
+        objectives: [
+          "Understand insurance procedures, billing, and coding systems (Objective 3)",
+          "Correlate coding, billing, and collecting (Objective 3)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Insurance Verification & CMS-1500 Mapping: inspect HMO, PPO, Medicare, and Medicaid cards, verify eligibility, and complete clean claim boxes." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Insurance 20-Claim Verification Hub: solve 20 payer scenarios involving copays, deductibles, coinsurance, and box mapping." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Health Insurance & CMS-1500 assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(11),
+        quiz: generateWeeklyQuizData(11)
+      },
+      {
+        week: 12,
+        date: "Friday, November 13, 2026",
+        title: "Diagnostic & Procedural Coding (ICD-10-CM & CPT)",
+        module: "Module 12",
+        objectives: [
+          "Understand insurance procedures, billing, and coding systems (Objective 3)",
+          "Correlate coding, billing, and collecting (Objective 3)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Encounter Form Coding: navigate ICD-10-CM tabular/alphabetic indexes and CPT manuals to code clinical encounter forms." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Coding 20-Code Match Challenge: match 20 diagnostic statements and outpatient procedures with coding guidelines." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question ICD-10-CM & CPT Medical Coding assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(12),
+        quiz: generateWeeklyQuizData(12)
+      },
+      {
+        week: 13,
+        date: "Friday, November 20, 2026",
+        title: "Bookkeeping, Day-Sheets, Collections & Financial Management",
+        module: "Module 13",
+        objectives: [
+          "Apply financial management principles including collections and payment plans (Objective 4)",
+          "Perform bookkeeping tasks (Objective 4)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Day-Sheet Balancing & Ledger Posting: post payments, contractual adjustments, calculate daily totals, and balance a petty cash voucher." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Bookkeeping 20-Entry Ledger Solver: balance 20 daily transaction entries and reconcile deposit totals." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Day-Sheet & Medical Bookkeeping assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(13),
+        quiz: generateWeeklyQuizData(13)
+      },
+      {
+        week: 14,
+        date: "Friday, November 27, 2026",
+        title: "Comprehensive Medical Office Workflow & Case Studies",
+        module: "Module 14",
+        objectives: [
+          "Schedule appointments (Objective 1)",
+          "Create, document, and maintain patient medical records (Objective 2)",
+          "Correlate coding, billing, and collecting (Objective 3)",
+          "Perform bookkeeping tasks (Objective 4)",
+          "Demonstrate interpersonal communication skills (Objective 6)"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Full-Cycle Patient Simulation: check-in, registration, encounter form coding, payment posting, and recall scheduling." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Encounter 20-Step Audit Mystery: audit 20 sequential patient encounter files to detect administrative discrepancies." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Comprehensive Workflow & Case Studies assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(14),
+        quiz: generateWeeklyQuizData(14)
+      },
+      {
+        week: 15,
+        date: "Wednesday, December 2, 2026",
+        title: "Administrative Procedures Capstone & Practical Mastery",
+        module: "Module 15",
+        objectives: [
+          "Demonstrate professionalism and effective communication in a medical office",
+          "Manage patient scheduling and appointment systems",
+          "Maintain and organize medical records and electronic health records (EHR)",
+          "Perform telephone techniques and patient education tasks",
+          "Understand insurance procedures, billing, and coding systems",
+          "Apply financial management principles including collections and payment plans",
+          "Operate office equipment and manage supplies",
+          "Comply with legal, ethical, and safety standards in administrative procedures"
+        ],
+        breakdown: [
+          { phase: "Hands-on Lab", time: "50 min", desc: "Full Clinic Operations Capstone: High-fidelity mock clinic simulation rotating students across reception, triage, billing, and record filing." },
+          { phase: "Interactive Drill", time: "35 min", desc: "Capstone 20-Core Competency Practical: demonstrate mastery across all 20 essential administrative medical assisting skills." },
+          { phase: "20-Q Quiz & Debrief", time: "35 min", desc: "Complete the 20-Question Final Administrative Competency Mastery assessment." }
+        ],
+        interactiveDrill: generateInteractiveDrillData(15),
+        quiz: generateWeeklyQuizData(15)
+      }
+    ];
+
+    let currentWeekIndex = 0;
+    let timerInterval = null;
+    let totalSeconds = 120 * 60; // 2 hours in seconds
+    let isTimerRunning = false;
+    let quizResponses = {}; // stores answers: { weekIdx: { qIdx: selectedOptIdx } }
+    let drillResponses = {}; // stores answers: { weekIdx: { drillItemIdx: chosenOption } }
+    let currentQuizFilter = 'all'; // 'all', 'unanswered', 'incorrect'
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderNav();
+      renderPacket(currentWeekIndex);
+      lucide.createIcons();
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById("toastNotification");
+      const msgEl = document.getElementById("toastMessage");
+      msgEl.textContent = msg;
+      toast.classList.remove("hidden");
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3000);
+    }
+
+    function renderNav(filterQuery = "") {
+      const navList = document.getElementById("weekNavList");
+      const query = filterQuery.toLowerCase().trim();
+
+      const filtered = labPackets.filter(pkg => 
+        pkg.title.toLowerCase().includes(query) ||
+        pkg.module.toLowerCase().includes(query) ||
+        pkg.date.toLowerCase().includes(query) ||
+        `week ${pkg.week}`.includes(query)
+      );
+
+      if (filtered.length === 0) {
+        navList.innerHTML = `<div class="p-3 text-center text-xs text-slate-400">No matching lab modules found.</div>`;
+        return;
+      }
+
+      navList.innerHTML = filtered.map(pkg => {
+        const idx = pkg.week - 1;
+        const isSelected = idx === currentWeekIndex;
+        const quizCount = pkg.quiz ? pkg.quiz.length : 20;
+        const drillCount = pkg.interactiveDrill ? pkg.interactiveDrill.items.length : 20;
+
+        return `
+          <button onclick="selectWeek(${idx})" class="w-full text-left p-3 rounded-xl text-xs font-medium transition flex items-center justify-between group ${
+            isSelected 
+              ? 'bg-slate-900 text-white font-bold shadow-md ring-2 ring-red-600' 
+              : 'text-slate-700 hover:bg-slate-100 bg-slate-50/80 border border-slate-200/80'
+          }">
+            <div class="truncate pr-2">
+              <div class="flex items-center space-x-1.5 mb-1">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isSelected ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'}">
+                  Week ${pkg.week}
+                </span>
+                <span class="text-[10px] ${isSelected ? 'text-slate-300' : 'text-slate-400'}">${pkg.date.split(',')[1]}</span>
+              </div>
+              <span class="truncate block text-xs font-semibold ${isSelected ? 'text-white' : 'text-slate-800'}">${pkg.title}</span>
+              <div class="mt-1 flex items-center space-x-2 text-[10px] ${isSelected ? 'text-slate-400' : 'text-slate-500'}">
+                <span>⚡ ${drillCount} Drills</span>
+                <span>•</span>
+                <span>📝 ${quizCount} Qs</span>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 flex-shrink-0 transition transform group-hover:translate-x-0.5 ${isSelected ? 'text-red-400' : 'text-slate-400'}"></i>
+          </button>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterWeeks(query) {
+      renderNav(query);
+    }
+
+    function selectWeek(idx) {
+      currentWeekIndex = idx;
+      renderNav(document.getElementById("weekSearchInput").value);
+      renderPacket(currentWeekIndex);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderPacket(idx) {
+      const data = labPackets[idx];
+      const display = document.getElementById("packetDisplay");
+
+      // Initialize response storage
+      if (!quizResponses[idx]) quizResponses[idx] = {};
+      if (!drillResponses[idx]) drillResponses[idx] = {};
+
+      const drillData = data.interactiveDrill;
+      const quizData = data.quiz;
+
+      // Calculate quiz stats
+      const answeredQuizCount = Object.keys(quizResponses[idx]).length;
+      let correctQuizCount = 0;
+      Object.keys(quizResponses[idx]).forEach(qI => {
+        if (quizResponses[idx][qI] === quizData[qI].answer) {
+          correctQuizCount++;
+        }
+      });
+      const quizScorePercent = answeredQuizCount > 0 ? Math.round((correctQuizCount / answeredQuizCount) * 100) : 0;
+
+      // Calculate drill stats
+      const answeredDrillCount = Object.keys(drillResponses[idx]).length;
+      let correctDrillCount = 0;
+      Object.keys(drillResponses[idx]).forEach(dI => {
+        if (drillResponses[idx][dI] === drillData.items[dI].ans) {
+          correctDrillCount++;
+        }
+      });
+
+      display.innerHTML = `
+        <!-- Packet Header -->
+        <div class="border-b border-slate-200 pb-5 mb-6">
+          <div class="flex flex-wrap justify-between items-start gap-3 mb-2">
+            <div class="flex items-center space-x-2">
+              <span class="px-3 py-1 bg-red-600 text-white font-black text-xs uppercase tracking-wider rounded-lg shadow-sm">
+                Week ${data.week}
+              </span>
+              <span class="px-2.5 py-1 bg-slate-100 text-slate-700 font-bold text-xs rounded-lg border border-slate-200">
+                ${data.module}
+              </span>
+            </div>
+            <div class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 border border-slate-200">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-red-600"></i>
+              <span>${data.date}</span>
+            </div>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">${data.title}</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 font-medium">MDCA 1421: Administrative Procedures • Lamar Institute of Technology</p>
+        </div>
+
+        <!-- Course Objectives Section -->
+        <div class="mb-6 bg-slate-50 rounded-2xl p-5 border border-slate-200">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2.5 flex items-center space-x-2">
+            <i data-lucide="target" class="w-4 h-4 text-red-600"></i>
+            <span>Course Objectives Covered in This Packet</span>
+          </h3>
+          <ul class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            ${data.objectives.map(obj => `
+              <li class="text-xs text-slate-700 flex items-start space-x-2 bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-xs">
+                <span class="text-red-600 font-bold mt-0.5">•</span>
+                <span class="font-medium">${obj}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+
+        <!-- 2-Hour Lab Plan & Timeline Breakdown -->
+        <div class="mb-8">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+              <i data-lucide="clock" class="w-4 h-4 text-red-600"></i>
+              <span>2-Hour Lab Breakdown & Execution Plan</span>
+            </h3>
+            <span class="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-bold">120 Minutes Total</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            ${data.breakdown.map((block, bIdx) => `
+              <div class="border border-slate-200 rounded-xl p-4 bg-white shadow-xs hover:border-red-300 transition flex flex-col justify-between">
+                <div>
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${
+                      bIdx === 0 ? 'bg-blue-100 text-blue-800' :
+                      bIdx === 1 ? 'bg-amber-100 text-amber-800' :
+                      'bg-emerald-100 text-emerald-800'
+                    }">${block.phase}</span>
+                    <span class="text-xs font-mono font-bold text-slate-600">${block.time}</span>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed font-medium">${block.desc}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- SECTION 1: 20-ITEM INTERACTIVE SIMULATION DRILL -->
+        <div class="mb-10 bg-slate-900 text-white rounded-2xl p-5 sm:p-7 shadow-xl border border-slate-800">
+          <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-slate-800 mb-5">
+            <div class="flex items-center space-x-3">
+              <span class="p-2 bg-red-600 rounded-xl shadow">
+                <i data-lucide="gamepad-2" class="w-5 h-5 text-white"></i>
+              </span>
+              <div>
+                <h3 class="text-base sm:text-lg font-bold">${drillData.title}</h3>
+                <p class="text-xs text-slate-400">20-Item Interactive Skills & Scenario Challenge</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+              <span class="text-xs text-slate-300">Drill Progress:</span>
+              <span class="text-xs font-bold font-mono text-emerald-400" id="drillScoreDisplay">
+                ${answeredDrillCount} / 20 Answered (${correctDrillCount} Correct)
+              </span>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-300 mb-5 bg-slate-800/80 p-3 rounded-xl border border-slate-700 leading-relaxed">
+            <strong class="text-red-400">Instructions:</strong> ${drillData.instruction}
+          </p>
+
+          <!-- 20 Interactive Drill Cards Grid -->
+          <div class="space-y-3 max-h-[650px] overflow-y-auto pr-2 scrollbar-thin">
+            ${drillData.items.map((item, dIdx) => renderDrillCard(idx, dIdx, item)).join('')}
+          </div>
+        </div>
+
+        <!-- SECTION 2: 20-QUESTION COMPREHENSIVE QUIZ -->
+        <div class="mb-8">
+          <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <i data-lucide="help-circle" class="w-5 h-5 text-red-600"></i>
+                <span>Weekly Assessment & Competency Quiz (20 Questions)</span>
+              </h3>
+              <p class="text-xs text-slate-500">Instant feedback, rationales, and progress tracking</p>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <div class="bg-slate-900 text-white text-xs px-3.5 py-1.5 rounded-xl font-bold font-mono flex items-center space-x-2 shadow-sm">
+                <span>Score:</span>
+                <span class="text-emerald-400" id="quizScoreText">${correctQuizCount}/${quizData.length} (${quizScorePercent}%)</span>
+              </div>
+              <button onclick="resetQuiz(${idx})" class="p-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 text-xs font-medium flex items-center space-x-1" title="Reset All Answers">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">Reset</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 20 Question Cards Container -->
+          <div class="space-y-4">
+            ${quizData.map((qItem, qIdx) => renderQuizCard(idx, qIdx, qItem)).join('')}
+          </div>
+        </div>
+
+        <!-- Bottom Navigation Controls -->
+        <div class="flex justify-between items-center pt-6 border-t border-slate-200 no-print">
+          <button onclick="prevWeek()" class="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition ${currentWeekIndex === 0 ? 'opacity-40 cursor-not-allowed' : ''}" ${currentWeekIndex === 0 ? 'disabled' : ''}>
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Previous Week</span>
+          </button>
+          <span class="text-xs text-slate-400 font-bold font-mono">Week ${data.week} of 15</span>
+          <button onclick="nextWeek()" class="flex items-center space-x-2 px-5 py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition shadow-sm ${currentWeekIndex === labPackets.length - 1 ? 'opacity-40 cursor-not-allowed' : ''}" ${currentWeekIndex === labPackets.length - 1 ? 'disabled' : ''}>
+            <span>Next Week</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+
+      lucide.createIcons();
+    }
+
+    function renderDrillCard(weekIdx, drillIdx, item) {
+      const chosen = drillResponses[weekIdx] ? drillResponses[weekIdx][drillIdx] : null;
+      let cardBg = "bg-slate-800/90 border-slate-700";
+      let statusBadge = "";
+
+      if (chosen) {
+        if (chosen === item.ans) {
+          cardBg = "bg-emerald-950/70 border-emerald-600/80";
+          statusBadge = `<span class="text-[10px] font-bold text-emerald-400 bg-emerald-900/50 px-2 py-0.5 rounded border border-emerald-500/40">✓ Correct</span>`;
+        } else {
+          cardBg = "bg-rose-950/70 border-rose-600/80";
+          statusBadge = `<span class="text-[10px] font-bold text-rose-400 bg-rose-900/50 px-2 py-0.5 rounded border border-rose-500/40">✗ Incorrect</span>`;
+        }
+      }
+
+      return `
+        <div class="p-3.5 rounded-xl border ${cardBg} transition flex flex-col gap-2.5" id="drillCard_${weekIdx}_${drillIdx}">
+          <div class="flex justify-between items-start gap-2">
+            <div class="flex items-start space-x-2">
+              <span class="font-mono text-[10px] font-bold bg-slate-900 px-1.5 py-0.5 rounded text-slate-400 flex-shrink-0">#${drillIdx + 1}</span>
+              <p class="text-xs text-slate-100 font-medium leading-relaxed">${item.q}</p>
+            </div>
+            ${statusBadge}
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="handleDrillChoice(${weekIdx}, ${drillIdx}, 'A')" class="flex-1 text-[11px] font-semibold py-1.5 px-3 rounded-lg border transition ${
+              chosen === 'A' 
+                ? (item.ans === 'A' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-rose-600 text-white border-rose-500')
+                : 'bg-slate-900 hover:bg-slate-700 text-slate-200 border-slate-700'
+            }">
+              ${item.optA}
+            </button>
+            <button onclick="handleDrillChoice(${weekIdx}, ${drillIdx}, 'B')" class="flex-1 text-[11px] font-semibold py-1.5 px-3 rounded-lg border transition ${
+              chosen === 'B' 
+                ? (item.ans === 'B' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-rose-600 text-white border-rose-500')
+                : 'bg-slate-900 hover:bg-slate-700 text-slate-200 border-slate-700'
+            }">
+              ${item.optB}
+            </button>
+          </div>
+
+          ${chosen ? `
+            <div class="text-[11px] text-slate-300 bg-slate-900/90 p-2.5 rounded-lg border border-slate-700/60 leading-relaxed font-sans">
+              <strong class="text-amber-400 font-semibold">Rationale:</strong> ${item.exp}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderQuizCard(weekIdx, qIdx, qItem) {
+      const selectedOpt = quizResponses[weekIdx] ? quizResponses[weekIdx][qIdx] : null;
+      const isAnswered = selectedOpt !== undefined && selectedOpt !== null;
+
+      return `
+        <div class="border border-slate-200 rounded-2xl p-4 sm:p-5 bg-white shadow-xs" id="quizCard_${weekIdx}_${qIdx}">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+              <span class="text-red-600 mr-1">${qItem.q.split(']')[0]}]</span>
+              <span>${qItem.q.split(']')[1] || qItem.q}</span>
+            </p>
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 bg-slate-100 text-slate-500 rounded">Q${qIdx + 1} of 20</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 mb-2">
+            ${qItem.options.map((opt, optIdx) => {
+              let btnClass = "border-slate-200 bg-slate-50/70 text-slate-700 hover:bg-slate-100 hover:border-slate-300";
+              let iconHtml = `<span class="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0 mr-2 flex items-center justify-center text-[10px] text-slate-400 font-bold">${String.fromCharCode(65 + optIdx)}</span>`;
+
+              if (isAnswered) {
+                if (optIdx === qItem.answer) {
+                  btnClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-bold shadow-xs";
+                  iconHtml = `<i data-lucide="check" class="w-4 h-4 text-emerald-600 mr-2 flex-shrink-0"></i>`;
+                } else if (optIdx === selectedOpt) {
+                  btnClass = "border-rose-500 bg-rose-50 text-rose-900 font-bold";
+                  iconHtml = `<i data-lucide="x" class="w-4 h-4 text-rose-600 mr-2 flex-shrink-0"></i>`;
+                } else {
+                  btnClass = "border-slate-200 bg-slate-50 text-slate-400 opacity-60";
+                }
+              }
+
+              return `
+                <button onclick="handleQuizAnswer(${weekIdx}, ${qIdx}, ${optIdx})" ${isAnswered ? 'disabled' : ''} class="w-full text-left text-xs p-2.5 rounded-xl border transition flex items-center justify-between ${btnClass}">
+                  <div class="flex items-center">
+                    ${iconHtml}
+                    <span>${opt}</span>
+                  </div>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          ${isAnswered ? `
+            <div class="mt-3 p-3 rounded-xl text-xs leading-relaxed border ${
+              selectedOpt === qItem.answer 
+                ? 'bg-emerald-50 text-emerald-950 border-emerald-200' 
+                : 'bg-rose-50 text-rose-950 border-rose-200'
+            }">
+              <div class="font-bold mb-0.5 flex items-center space-x-1.5">
+                <i data-lucide="${selectedOpt === qItem.answer ? 'check-circle' : 'alert-triangle'}" class="w-3.5 h-3.5 ${selectedOpt === qItem.answer ? 'text-emerald-600' : 'text-rose-600'}"></i>
+                <span>${selectedOpt === qItem.answer ? 'Correct' : 'Incorrect'}</span>
+              </div>
+              <p class="mt-1">${qItem.rationale}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function handleDrillChoice(weekIdx, drillIdx, choice) {
+      if (!drillResponses[weekIdx]) drillResponses[weekIdx] = {};
+      drillResponses[weekIdx][drillIdx] = choice;
+      renderPacket(weekIdx);
+      showToast(`Drill item #${drillIdx + 1} recorded`);
+    }
+
+    function handleQuizAnswer(weekIdx, qIdx, selectedOptIdx) {
+      if (!quizResponses[weekIdx]) quizResponses[weekIdx] = {};
+      quizResponses[weekIdx][qIdx] = selectedOptIdx;
+      renderPacket(weekIdx);
+      showToast(`Question #${qIdx + 1} answered`);
+    }
+
+    function resetQuiz(weekIdx) {
+      quizResponses[weekIdx] = {};
+      drillResponses[weekIdx] = {};
+      renderPacket(weekIdx);
+      showToast(`Quiz and Drill answers reset for Week ${weekIdx + 1}`);
+    }
+
+    function prevWeek() {
+      if (currentWeekIndex > 0) selectWeek(currentWeekIndex - 1);
+    }
+
+    function nextWeek() {
+      if (currentWeekIndex < labPackets.length - 1) selectWeek(currentWeekIndex + 1);
+    }
+
+    function toggleTimerModal() {
+      const modal = document.getElementById("timerModal");
+      modal.classList.toggle("hidden");
+    }
+
+    function formatTime(seconds) {
+      const hrs = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById("timerDisplay").textContent = formatTime(totalSeconds);
+      document.getElementById("headerTimerText").textContent = formatTime(totalSeconds);
+    }
+
+    function toggleTimer() {
+      const btnLabel = document.getElementById("timerBtnLabel");
+      const playIcon = document.getElementById("playIcon");
+
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btnLabel.textContent = "Resume";
+        playIcon.setAttribute("data-lucide", "play");
+      } else {
+        isTimerRunning = true;
+        btnLabel.textContent = "Pause";
+        playIcon.setAttribute("data-lucide", "pause");
+        timerInterval = setInterval(() => {
+          if (totalSeconds > 0) {
+            totalSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            showToast("Lab time period completed!");
+          }
+        }, 1000);
+      }
+      lucide.createIcons();
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      totalSeconds = 120 * 60;
+      updateTimerDisplay();
+      document.getElementById("timerBtnLabel").textContent = "Start Clock";
+      document.getElementById("currentPhaseText").textContent = "Phase: Full 2-Hour Lab Session";
+      lucide.createIcons();
+    }
+
+    function setTimerPhase(minutes, label) {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      totalSeconds = minutes * 60;
+      updateTimerDisplay();
+      document.getElementById("currentPhaseText").textContent = `Phase: ${label} (${minutes}m)`;
+      document.getElementById("timerBtnLabel").textContent = "Start Phase";
+      lucide.createIcons();
+      showToast(`Pacing timer set to ${minutes} minutes`);
+    }
+  </script>
+</body>
+</html>
