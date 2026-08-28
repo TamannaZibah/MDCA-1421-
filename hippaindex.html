@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MDCA 1421 - HIPAA Interactive Video Case Simulator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .cinema-screen {
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    }
+    .pulse-glow {
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(225, 29, 72, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(225, 29, 72, 0.8); }
+    }
+    .scanlines {
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.25) 50%
+      ), linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.03),
+        rgba(0, 255, 0, 0.01),
+        rgba(0, 0, 255, 0.03)
+      );
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+    }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-rose-500 selection:text-white">
+
+  <!-- Header Navigation -->
+  <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-indigo-600 flex items-center justify-center text-white font-black shadow-lg shadow-rose-600/30">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-base font-extrabold text-white leading-tight">HIPAA Confidential: Interactive Clinic Video</h1>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono uppercase font-bold">Interactive Film</span>
+          </div>
+          <p class="text-xs text-slate-400">MDCA 1421 Administrative Procedures • Lamar Institute of Technology</p>
+        </div>
+      </div>
+
+      <!-- Live Stats & Top Controls -->
+      <div class="flex items-center space-x-3">
+        <div class="hidden sm:flex items-center gap-4 bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-xl">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            <span class="text-xs text-slate-400">Compliance:</span>
+            <span id="scoreDisplay" class="text-xs font-bold text-emerald-400 font-mono-code">100%</span>
+          </div>
+          <div class="w-px h-4 bg-slate-800"></div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="scale" class="w-4 h-4 text-amber-400"></i>
+            <span class="text-xs text-slate-400">OCR Penalties:</span>
+            <span id="penaltyDisplay" class="text-xs font-bold text-rose-400 font-mono-code">$0</span>
+          </div>
+        </div>
+
+        <!-- Voice Persona Selector & Toggle -->
+        <div class="flex items-center gap-1.5 bg-slate-950/90 border border-slate-800 p-1 rounded-xl">
+          <select id="voicePersonaSelect" onchange="changeVoicePersona(this.value)" class="bg-slate-900 text-slate-200 text-xs rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-rose-500 font-sans cursor-pointer" title="Select Voice Persona">
+            <option value="warm">🎙️ Dr. Kendra (Warm Instructor)</option>
+            <option value="dynamic">✨ Alex (Energetic Clinic MA)</option>
+            <option value="formal">⚖️ OCR Director (Authoritative)</option>
+          </select>
+          <button onclick="toggleVoiceover()" id="voiceBtn" class="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-xs font-medium transition" title="Toggle Voice On/Off">
+            <i data-lucide="volume-2" class="w-3.5 h-3.5 text-emerald-400" id="voiceIcon"></i>
+            <span id="voiceLabel" class="hidden sm:inline text-[11px]">Voice ON</span>
+          </button>
+        </div>
+
+        <button onclick="resetSimulation()" class="flex items-center space-x-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-3 py-1.5 rounded-xl border border-rose-500/30 text-xs font-medium transition">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>Restart</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Simulator Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col lg:flex-row gap-6 w-full items-start">
+    
+    <!-- Left Column: Video Cinema Player -->
+    <div class="w-full lg:flex-1 flex flex-col gap-4">
+      
+      <!-- Video Screen Frame -->
+      <div class="relative w-full aspect-[16/9] cinema-screen rounded-3xl border-2 border-slate-800 overflow-hidden shadow-2xl flex flex-col justify-between group">
+        
+        <!-- CRT Overlay lines -->
+        <div class="scanlines absolute inset-0 z-10 opacity-40"></div>
+
+        <!-- Top Status Bar Inside Video -->
+        <div class="relative z-20 p-4 flex items-center justify-between bg-gradient-to-b from-slate-950/90 via-slate-950/40 to-transparent">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+            <span class="text-xs font-mono-code font-bold uppercase tracking-wider text-rose-400" id="videoRecLabel">REC • SCENE 1/5</span>
+            <span class="text-xs text-slate-400">•</span>
+            <span class="text-xs font-semibold text-slate-300" id="sceneLocation">Oakridge Medical Clinic Reception</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded bg-slate-900/80 border border-slate-700 text-[10px] font-mono-code text-amber-300" id="safeguardCategory">PHYSICAL SAFEGUARD</span>
+            <button onclick="toggleVideoInspector()" id="inspectorToggleBtn" class="hidden px-2 py-0.5 rounded bg-rose-500 hover:bg-rose-600 text-white text-[10px] font-bold transition flex items-center gap-1">
+              <i data-lucide="crosshair" class="w-3 h-3"></i>
+              <span>Breach Hunt Mode</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Animated Canvas Stage -->
+        <div class="relative flex-1 flex items-center justify-center p-4 z-10" id="videoStage">
+          
+          <!-- Animated Scene Visuals Rendered Here -->
+          <div id="sceneAnimationContainer" class="w-full h-full flex items-center justify-center relative">
+            <!-- Dynamic SVG Scene Graphic -->
+            <div id="sceneGraphic" class="w-full h-full flex items-center justify-center transition-all duration-500">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Interactive Hotspot Breach Layer (When Inspector Mode is Active) -->
+          <div id="hotspotLayer" class="absolute inset-0 z-30 hidden">
+            <!-- Hotspots dynamically injected -->
+          </div>
+
+          <!-- Decision Overlay Modal (Appears at Key Video Pause Points) -->
+          <div id="decisionModal" class="absolute inset-0 z-30 bg-slate-950/85 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center hidden animate-in fade-in duration-300">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500 text-amber-400 flex items-center justify-center mb-3">
+              <i data-lucide="help-circle" class="w-6 h-6 animate-bounce"></i>
+            </div>
+            <span class="text-[11px] font-mono-code uppercase tracking-widest text-amber-400 font-bold mb-1">Critical Administrative Decision</span>
+            <h2 class="text-lg sm:text-xl font-black text-white max-w-lg leading-snug" id="decisionPrompt">What should Alex the Medical Assistant do in this situation?</h2>
+            
+            <!-- Choice Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 w-full max-w-xl" id="decisionOptions">
+              <!-- Choices rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Consequence / Feedback Banner -->
+          <div id="consequenceOverlay" class="absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center hidden animate-in zoom-in-95 duration-200">
+            <div id="consequenceIconBox" class="w-16 h-16 rounded-3xl flex items-center justify-center mb-3 text-3xl">
+              <!-- Icon -->
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black" id="consequenceTitle">Compliance Mastered!</h3>
+            <p class="text-xs sm:text-sm text-slate-300 max-w-lg mt-2 leading-relaxed" id="consequenceText">Detailed feedback explaining legal outcome and OCR guidelines.</p>
+            <div class="mt-4 flex items-center gap-3">
+              <button onclick="continueVideoPlayback()" class="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold text-xs rounded-xl shadow-lg transition flex items-center gap-2">
+                <span>Continue Video</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Video Completion Final Screen -->
+          <div id="completionOverlay" class="absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center hidden">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-white text-3xl shadow-xl shadow-rose-500/30 mb-3">
+              🏆
+            </div>
+            <h2 class="text-2xl font-black text-white">HIPAA Case Simulation Completed!</h2>
+            <p class="text-xs text-slate-400 max-w-md mt-1">You have successfully navigated through all 5 clinic chapters. Here is your administrative compliance summary:</p>
+            
+            <div class="grid grid-cols-2 gap-3 my-4 w-full max-w-sm">
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+                <span class="text-[10px] uppercase text-slate-400 font-mono-code">Final Score</span>
+                <p class="text-xl font-extrabold text-emerald-400" id="finalScoreText">100%</p>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+                <span class="text-[10px] uppercase text-slate-400 font-mono-code">Total Fines Avoided</span>
+                <p class="text-xl font-extrabold text-amber-400" id="finalFinesText">$150,000</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button onclick="printCertificate()" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-rose-600 hover:from-indigo-500 hover:to-rose-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+                <i data-lucide="award" class="w-4 h-4"></i>
+                <span>Claim HIPAA Certificate</span>
+              </button>
+              <button onclick="resetSimulation()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+                Play Again
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Video Subtitles & Dialogue Bar -->
+        <div class="relative z-20 px-6 py-2 bg-slate-950/80 border-t border-slate-800/80 backdrop-blur-sm min-h-[48px] flex items-center justify-center text-center">
+          <p id="dialogueSubtitle" class="text-xs sm:text-sm font-medium text-amber-200 transition-all duration-300">
+            "Welcome to Oakridge Medical. Let's observe the front desk procedures..."
+          </p>
+        </div>
+
+        <!-- Bottom Cinema Playback Controller -->
+        <div class="relative z-20 bg-slate-950 px-4 py-3 border-t border-slate-800 flex flex-col gap-2">
+          <!-- Timeline Scrubber Bar -->
+          <div class="relative w-full bg-slate-800 h-2 rounded-full overflow-hidden cursor-pointer" onclick="handleTimelineClick(event)">
+            <div id="videoProgressBar" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-200" style="width: 20%;"></div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <!-- Left Controls -->
+            <div class="flex items-center space-x-3">
+              <button onclick="togglePlayPause()" id="playPauseBtn" class="w-8 h-8 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow transition">
+                <i data-lucide="play" class="w-4 h-4 fill-current ml-0.5" id="playIcon"></i>
+              </button>
+              <button onclick="prevChapter()" class="text-slate-400 hover:text-white transition" title="Previous Scene">
+                <i data-lucide="skip-back" class="w-4 h-4"></i>
+              </button>
+              <button onclick="nextChapter()" class="text-slate-400 hover:text-white transition" title="Next Scene">
+                <i data-lucide="skip-forward" class="w-4 h-4"></i>
+              </button>
+              <span class="text-[11px] font-mono-code text-slate-400" id="timeCode">00:15 / 02:30</span>
+            </div>
+
+            <!-- Chapter Marker Indicators -->
+            <div class="hidden md:flex items-center space-x-1.5 text-[11px] font-mono-code">
+              <button onclick="jumpToScene(0)" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold" id="chip0">CH 1: Reception</button>
+              <button onclick="jumpToScene(1)" class="px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200" id="chip1">CH 2: Elevator</button>
+              <button onclick="jumpToScene(2)" class="px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200" id="chip2">CH 3: EHR Snoop</button>
+              <button onclick="jumpToScene(3)" class="px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200" id="chip3">CH 4: Fax Mistake</button>
+              <button onclick="jumpToScene(4)" class="px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200" id="chip4">CH 5: Trash PHI</button>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] bg-slate-900 border border-slate-800 text-slate-400 px-2 py-1 rounded">1080p HD</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Summary Card -->
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800 p-4 backdrop-blur-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-white">LIT Course Alignment: MDCA 1421 Objective 5</h4>
+            <p class="text-slate-400">Comply with legal, ethical, and safety standards in administrative medical assisting.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-mono-code text-[11px]">HIPAA Title II: Administrative Simplification</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Interactive Evidence & Safeguard Radar -->
+    <div class="w-full lg:w-96 flex flex-col gap-4">
+      
+      <!-- Safeguards Breakdown Card -->
+      <div class="bg-slate-900/60 rounded-3xl border border-slate-800/80 p-5 backdrop-blur-sm">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="lock" class="w-4 h-4 text-rose-400"></i>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">HIPAA Security Rule Pillars</h3>
+          </div>
+          <span class="text-[10px] text-slate-400 font-mono-code">3 Safeguards</span>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Physical -->
+          <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                <span class="text-xs font-bold text-white">Physical Safeguards</span>
+              </div>
+              <span class="text-[10px] font-mono-code text-emerald-400" id="statPhysical">Active</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Locked chart rooms, screen privacy filters, clean desk policy, locked shredder bins.</p>
+          </div>
+
+          <!-- Technical -->
+          <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span class="text-xs font-bold text-white">Technical Safeguards</span>
+              </div>
+              <span class="text-[10px] font-mono-code text-slate-400" id="statTechnical">Pending</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Unique user logins, auto-logoff timers, 256-bit encryption, EHR access audit logs.</p>
+          </div>
+
+          <!-- Administrative -->
+          <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="text-xs font-bold text-white">Administrative Safeguards</span>
+              </div>
+              <span class="text-[10px] font-mono-code text-slate-400" id="statAdmin">Pending</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Staff HIPAA training, Business Associate Agreements (BAA), sanctions for violations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breach Evidence Locker Log -->
+      <div class="bg-slate-900/60 rounded-3xl border border-slate-800/80 p-5 backdrop-blur-sm flex-1">
+        <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="file-warning" class="w-4 h-4 text-amber-400"></i>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Breach Incident Log</h3>
+          </div>
+          <span class="text-[10px] text-slate-400 font-mono-code" id="incidentCount">0 / 5 Resolved</span>
+        </div>
+
+        <div id="incidentLogList" class="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-thin text-xs">
+          <div class="text-center py-6 text-slate-500 italic text-[11px]">
+            Watch the video chapters and make compliance decisions to log incidents.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Printable Certificate Modal (Hidden by default) -->
+  <div id="certModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md p-4 flex items-center justify-center hidden">
+    <div class="bg-white text-slate-900 rounded-3xl p-8 max-w-2xl w-full border-8 border-indigo-900 shadow-2xl relative">
+      <button onclick="closeCert()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 print:hidden">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <div class="text-center border-4 border-dashed border-indigo-200 p-6 rounded-2xl">
+        <div class="flex justify-center mb-2">
+          <div class="w-12 h-12 rounded-xl bg-indigo-900 text-white flex items-center justify-center font-black text-xl">
+            LIT
+          </div>
+        </div>
+        <h2 class="text-2xl font-black text-indigo-950 uppercase tracking-wider">Certificate of Completion</h2>
+        <p class="text-xs font-semibold text-indigo-700 mt-1">MDCA 1421: Administrative Procedures • HIPAA Title II Mastery</p>
+        
+        <p class="text-xs text-slate-600 mt-6">This document certifies that</p>
+        <h3 class="text-2xl font-extrabold text-slate-900 border-b-2 border-indigo-900 inline-block px-8 pb-1 my-2" id="certStudentName">Medical Assisting Student</h3>
+        
+        <p class="text-xs text-slate-600 max-w-md mx-auto mt-2 leading-relaxed">
+          Has demonstrated full competency in Physical, Technical, and Administrative Safeguards under the Health Insurance Portability and Accountability Act.
+        </p>
+
+        <div class="grid grid-cols-2 gap-6 mt-8 pt-6 border-t border-slate-200 text-xs">
+          <div>
+            <p class="font-bold text-slate-800">Tamanna Assih, Instructor</p>
+            <p class="text-[10px] text-slate-500">Lamar Institute of Technology</p>
+          </div>
+          <div>
+            <p class="font-bold text-slate-800" id="certDate">August 28, 2026</p>
+            <p class="text-[10px] text-slate-500">Verification ID: MDCA-HIPAA-2026</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 print:hidden">
+        <button onclick="window.print()" class="px-5 py-2 bg-indigo-900 text-white font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-indigo-800 transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Print Certificate</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    <p>MDCA 1421 Administrative Procedures • Interactive HIPAA Case Simulation • Lamar Institute of Technology</p>
+  </footer>
+
+  <script>
+    /* ==========================================================
+       HIPAA VIDEO SIMULATION SCENARIOS DATA
+       ========================================================== */
+    const scenes = [
+      {
+        id: 0,
+        title: "Chapter 1: The Reception Desk Exposure",
+        location: "Front Desk & Waiting Lobby",
+        safeguard: "PHYSICAL SAFEGUARD",
+        safeguardKey: "physical",
+        duration: 30, // seconds
+        subtitle: "A patient arrives to check in. Alex the Medical Assistant has three open paper charts lying face-up on the counter and the computer monitor is facing the waiting room.",
+        narration: "Scene One: The Reception Desk. A new patient approaches the check-in window. Notice the open medical charts and the exposed computer screen visible to everyone in the lobby.",
+        prompt: "A patient is checking in while another patient's HIV test results are visible on the desk. What is the compliant action?",
+        svgType: "reception",
+        choices: [
+          {
+            text: "Turn monitor away, close & turn over paper charts, and use a peel-off sign-in sheet that conceals prior names.",
+            correct: true,
+            finesAvoided: 25000,
+            title: "Physical Safeguards Enforced!",
+            feedback: "Correct! The HIPAA Privacy Rule requires covered entities to implement reasonable physical safeguards to prevent accidental disclosures of Protected Health Information (PHI) to unauthorized bystanders."
+          },
+          {
+            text: "Ask the waiting patients to simply close their eyes or step back 10 feet while you finish billing.",
+            correct: false,
+            penalty: 15000,
+            title: "HIPAA Physical Breach Detected!",
+            feedback: "Violation! Leaving visible PHI in areas accessible to the public without physical barriers or screen privacy filters violates 45 CFR § 164.530(c)."
+          },
+          {
+            text: "Cover the charts with a magazine, but leave the EHR screen unlocked since you'll be right back.",
+            correct: false,
+            penalty: 25000,
+            title: "Failure to Secure PHI Workstation!",
+            feedback: "Violation! Unattended, unlocked computer screens allow unauthorized viewing of electronic health data."
+          },
+          {
+            text: "Have patients sign their full legal name, diagnosis, and Social Security number on an open clipboard.",
+            correct: false,
+            penalty: 50000,
+            title: "Major Sign-In Sheet Privacy Violation!",
+            feedback: "Violation! Sign-in sheets cannot ask for clinical information or display previous patients' visit reasons."
+          }
+        ]
+      },
+      {
+        id: 1,
+        title: "Chapter 2: The Elevator Gossip Trap",
+        location: "Hospital Public Elevator & Hallway",
+        safeguard: "ADMINISTRATIVE SAFEGUARD",
+        safeguardKey: "admin",
+        duration: 35,
+        subtitle: "Dr. Vance and Alex get into an elevator with visitors and discuss Mrs. Gable's recent malignant tumor biopsy by name.",
+        narration: "Scene Two: The Public Elevator. Dr. Vance begins discussing a patient's sensitive diagnosis in an elevator crowded with visitors and other hospital guests.",
+        prompt: "A provider starts discussing a patient's cancer diagnosis in a crowded public elevator. How should the Medical Assistant respond?",
+        svgType: "elevator",
+        choices: [
+          {
+            text: "Politely redirect the provider: 'Let’s hold this discussion until we reach the private staff conference room.'",
+            correct: true,
+            finesAvoided: 30000,
+            title: "Minimum Necessary & Verbal Discretion!",
+            feedback: "Excellent! The 'Minimum Necessary' standard applies to verbal disclosures. Clinical details must only be discussed in private clinical spaces where unauthorized ears cannot overhear."
+          },
+          {
+            text: "Join the conversation but whisper the patient's last name so only the front row of the elevator hears.",
+            correct: false,
+            penalty: 20000,
+            title: "Verbal PHI Disclosure Breach!",
+            feedback: "Violation! Whispering in public spaces does not satisfy HIPAA verbal safeguard requirements."
+          },
+          {
+            text: "Use the patient's initials instead while continuing to describe all surgical and reproductive details.",
+            correct: false,
+            penalty: 15000,
+            title: "Indirect Patient Identification Violation!",
+            feedback: "Violation! Contextual clinical details combined with timing can easily identify a patient, violating confidentiality."
+          },
+          {
+            text: "Ignore it because doctors have absolute immunity to speak about cases anywhere they want.",
+            correct: false,
+            penalty: 25000,
+            title: "Shared Liability for Privacy Breaches!",
+            feedback: "Violation! All healthcare workforce members are obligated to intervene and maintain privacy compliance."
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: "Chapter 3: The VIP Celebrity Chart Snooping",
+        location: "Medical Records & EHR Terminal",
+        safeguard: "TECHNICAL SAFEGUARD",
+        safeguardKey: "technical",
+        duration: 35,
+        subtitle: "A famous local athlete is admitted to the clinic. A coworker asks Alex to open their EHR chart just to 'see what happened.'",
+        narration: "Scene Three: EHR Audit Trail. A celebrity has checked in. A colleague tempts you to open the chart just to peek at their private records.",
+        prompt: "Your colleague says: 'Log into the system and let's check why the mayor is here—no one will ever know!' What is the truth?",
+        svgType: "ehr",
+        choices: [
+          {
+            text: "Refuse immediately. Remind them that all EHR accesses generate timestamped user audit logs and looking without a clinical need is illegal.",
+            correct: true,
+            finesAvoided: 50000,
+            title: "Technical Safeguard & Audit Integrity!",
+            feedback: "Spot on! HIPAA requires covered entities to maintain automated audit trails (45 CFR § 164.312(b)). Snooping in records without a direct 'treatment, payment, or operations' (TPO) reason leads to immediate termination and criminal penalties under HITECH."
+          },
+          {
+            text: "Open the chart using the clinic's shared administrator password so your personal name isn't logged.",
+            correct: false,
+            penalty: 50000,
+            title: "Willful Neglect & Password Sharing Breach!",
+            feedback: "Severe Violation! Sharing credentials and snooping violates both Technical Safeguards and federal criminal privacy laws."
+          },
+          {
+            text: "Take a quick look without scrolling to the billing tab, as long as you don't screenshot anything.",
+            correct: false,
+            penalty: 35000,
+            title: "Unauthorized PHI Viewing!",
+            feedback: "Violation! Merely viewing PHI without clinical necessity constitutes an unauthorized breach."
+          },
+          {
+            text: "Print the lab page and show it to your colleague outside the building so it's not on the clinic WiFi.",
+            correct: false,
+            penalty: 50000,
+            title: "Criminal Dissemination of PHI!",
+            feedback: "Severe Violation! Removing physical PHI without authorization is a Tier 4 willful neglect violation."
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: "Chapter 4: The Misdirected Fax & Mobile Texting",
+        location: "Administrative Back Office",
+        safeguard: "TECHNICAL & ADMINISTRATIVE",
+        safeguardKey: "technical",
+        duration: 30,
+        subtitle: "Alex needs to send urgent medical records to a specialist. The phone line is busy, so a coworker suggests texting photos of the chart from a personal phone.",
+        narration: "Scene Four: Transmission Security. Urgent records must reach a cardiologist. A team member suggests sending photos of the chart via standard SMS text.",
+        prompt: "How must sensitive patient records be transmitted to an outside provider?",
+        svgType: "transmission",
+        choices: [
+          {
+            text: "Send via a verified encrypted EHR-to-EHR direct portal or a secure fax line with a standard HIPAA confidentiality cover sheet.",
+            correct: true,
+            finesAvoided: 25000,
+            title: "Transmission Security Standard Met!",
+            feedback: "Correct! HIPAA Transmission Security (45 CFR § 164.312(e)) mandates end-to-end encryption. Unencrypted SMS text messages are vulnerable to interception."
+          },
+          {
+            text: "Take photos on an iPhone and text them via standard iMessage or SMS because speed overrides HIPAA.",
+            correct: false,
+            penalty: 30000,
+            title: "Unencrypted Electronic Transmission Breach!",
+            feedback: "Violation! Standard SMS is unencrypted and stores PHI on personal mobile devices, creating a major security vulnerability."
+          },
+          {
+            text: "Post the record on an open cloud drive link and email the public link to the specialist's Gmail.",
+            correct: false,
+            penalty: 40000,
+            title: "Cloud Data Exposure Breach!",
+            feedback: "Violation! Storing PHI on non-BAA compliant cloud storage violates HIPAA technical security rules."
+          },
+          {
+            text: "Fax the records to the number written on a sticky note without verifying the recipient or speed-dial.",
+            correct: false,
+            penalty: 20000,
+            title: "Misdirected Fax Breach!",
+            feedback: "Violation! Faxes sent to wrong numbers without pre-verification constitute one of the most common reported HIPAA breach types."
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: "Chapter 5: The Trash Can Disposal Disaster",
+        location: "Exam Room & Supply Corridor",
+        safeguard: "PHYSICAL SAFEGUARD",
+        safeguardKey: "physical",
+        duration: 30,
+        subtitle: "At the end of the day, expired appointment rosters and prescription printouts with patient labels need to be discarded.",
+        narration: "Scene Five: PHI Destruction. The shift is ending. There is a pile of obsolete patient labels, encounter sheets, and prescription slips on the counter.",
+        prompt: "What is the legally compliant method for disposing of paper records containing PHI?",
+        svgType: "shredder",
+        choices: [
+          {
+            text: "Place all paper PHI into a locked cross-cut shredder console or contracted HIPAA-certified destruction bin.",
+            correct: true,
+            finesAvoided: 20000,
+            title: "Proper PHI Destruction Protocol!",
+            feedback: "Perfect! HIPAA requires physical disposal standards (such as cross-cut shredding, incineration, or secure pulping) rendering PHI completely unreadable and reconstructible."
+          },
+          {
+            text: "Tear the papers once down the middle and throw them in the regular lobby recycling container.",
+            correct: false,
+            penalty: 30000,
+            title: "Dumpster Diving PHI Exposure Breach!",
+            feedback: "Violation! Throwing intact or single-torn PHI in regular trash bins is a classic HIPAA violation subject to high civil monetary penalties."
+          },
+          {
+            text: "Take them home in your backpack and throw them out in your personal residential garbage bin.",
+            correct: false,
+            penalty: 35000,
+            title: "Unauthorized Removal of Clinic PHI!",
+            feedback: "Violation! Removing PHI from the facility breaches chain-of-custody protocols."
+          },
+          {
+            text: "Use the blank back of old patient intake forms as scratch paper for telephone messages.",
+            correct: false,
+            penalty: 25000,
+            title: "Improper Reuse of PHI Documents!",
+            feedback: "Violation! Reusing patient documents exposes previous patient data to anyone receiving telephone notes."
+          }
+        ]
+      }
+    ];
+
+    /* ==========================================================
+       SIMULATOR STATE
+       ========================================================== */
+    let currentSceneIdx = 0;
+    let isPlaying = true;
+    let videoTime = 0; // seconds
+    let totalScore = 100;
+    let totalFines = 0;
+    let resolvedScenes = [];
+    let voiceEnabled = true;
+    let timerInterval = null;
+    let activeUtterance = null;
+
+    /* ==========================================================
+       AUDIO SYNTHESIS & VOICE GENERATION
+       ========================================================== */
+    let audioCtx = null;
+    let selectedVoice = null;
+    let currentPersona = "warm"; // 'warm', 'dynamic', 'formal'
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
+    function playTone(type) {
+      try {
+        const ctx = getAudioContext();
+        if (ctx.state === "suspended") ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        if (type === "success") {
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+          gain.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        } else if (type === "error") {
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.25);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        } else if (type === "click") {
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          gain.gain.setValueAtTime(0.05, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        }
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      } catch (e) {}
+    }
+
+    /* Natural Neural Voice Finder & Prioritizer */
+    function initBestVoice() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices || voices.length === 0) return;
+
+      // Score voices prioritizing high-definition natural, neural, and studio voices
+      const scoredVoices = voices.filter(v => v.lang.startsWith('en')).map(v => {
+        let score = 0;
+        const name = v.name.toLowerCase();
+        
+        // Premium natural models
+        if (name.includes("natural") || name.includes("online") || name.includes("neural")) score += 100;
+        if (name.includes("google") && !name.includes("legacy")) score += 80;
+        if (name.includes("samantha") || name.includes("serena") || name.includes("karen") || name.includes("ava") || name.includes("jenny") || name.includes("aria") || name.includes("guy")) score += 70;
+        if (name.includes("enhanced") || name.includes("premium")) score += 60;
+        if (v.lang === "en-US") score += 20;
+        if (v.localService === false) score += 15; // Cloud neural voices typically sound smoother
+        
+        return { voice: v, score };
+      });
+
+      scoredVoices.sort((a, b) => b.score - a.score);
+      if (scoredVoices.length > 0) {
+        selectedVoice = scoredVoices[0].voice;
+      }
+    }
+
+    // Populate voices when browser loads them asynchronously
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        initBestVoice();
+      };
+    }
+
+    /* Phonetic Prosody Enhancer (Transforms robotic medical acronyms into conversational speech) */
+    function formatTextForNaturalSpeech(text) {
+      if (!text) return "";
+      return text
+        .replace(/HIPAA/g, "Hip-uh")
+        .replace(/\bPHI\b/g, "P, H, I")
+        .replace(/\bePHI\b/g, "e-P, H, I")
+        .replace(/\bEHR\b/g, "E, H, R")
+        .replace(/\bOCR\b/g, "O, C, R")
+        .replace(/\bSSN\b/g, "Social Security number")
+        .replace(/\bBAA\b/g, "B, A, A")
+        .replace(/\bTPO\b/g, "Treatment, Payment, and Operations")
+        .replace(/\bMRN\b/g, "Medical Record Number")
+        .replace(/\bDr\.\s/g, "Doctor ")
+        .replace(/\bCH\s(\d)/g, "Chapter $1")
+        .replace(/—/g, ", ")
+        .replace(/\.{3}/g, "... ");
+    }
+
+    function changeVoicePersona(personaKey) {
+      currentPersona = personaKey;
+      playTone("click");
+      speakNarration(`Voice updated to ${personaKey === 'warm' ? 'Doctor Kendra, Warm Instructor' : personaKey === 'dynamic' ? 'Alex, Clinic Medical Assistant' : 'Office for Civil Rights Director'} mode.`);
+    }
+
+    function speakNarration(text, mood = "narrator") {
+      if (!voiceEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      const naturalText = formatTextForNaturalSpeech(text);
+      const utterance = new SpeechSynthesisUtterance(naturalText);
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      // Dynamic inflection parameters based on selected persona & situational mood
+      if (currentPersona === "warm") {
+        // Warm, approachable, reassuring clinical educator
+        if (mood === "success") {
+          utterance.rate = 1.02;
+          utterance.pitch = 1.18; // Cheerful upward inflection
+        } else if (mood === "violation") {
+          utterance.rate = 0.94;
+          utterance.pitch = 0.96; // Serious cautionary inflection
+        } else {
+          utterance.rate = 0.98;
+          utterance.pitch = 1.08;
+        }
+      } else if (currentPersona === "dynamic") {
+        // High-energy, peer-learning Medical Assistant
+        utterance.rate = 1.06;
+        utterance.pitch = 1.14;
+      } else if (currentPersona === "formal") {
+        // Authoritative, direct regulatory compliance officer
+        utterance.rate = 0.93;
+        utterance.pitch = 0.88;
+      }
+
+      utterance.lang = "en-US";
+      activeUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* ==========================================================
+       SCENE GRAPHIC RENDERER (Dynamic Clinical Vector Visuals)
+       ========================================================== */
+    function renderSceneVisual(type) {
+      const container = document.getElementById("sceneGraphic");
+      let svgHtml = "";
+
+      if (type === "reception") {
+        svgHtml = `
+          <svg viewBox="0 0 700 400" class="w-full h-full max-h-[320px]" xmlns="http://www.w3.org/2000/svg">
+            <!-- Room Background -->
+            <rect width="700" height="400" fill="#0f172a"/>
+            <rect y="280" width="700" height="120" fill="#1e293b"/>
+            <line x1="0" y1="280" x2="700" y2="280" stroke="#334155" stroke-width="4"/>
+
+            <!-- Wall Artwork & Sign -->
+            <rect x="260" y="30" width="180" height="40" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+            <text x="350" y="55" fill="#93c5fd" font-size="14" font-weight="bold" text-anchor="middle">OAKRIDGE MEDICAL CLINIC</text>
+
+            <!-- Front Desk Counter -->
+            <rect x="120" y="190" width="460" height="130" rx="12" fill="#334155" stroke="#475569" stroke-width="4"/>
+            <rect x="140" y="210" width="420" height="15" fill="#1e293b" rx="4"/>
+
+            <!-- Medical Assistant Character (Alex) -->
+            <circle cx="280" cy="140" r="28" fill="#fbcfe8"/> <!-- Head -->
+            <rect x="250" y="168" width="60" height="60" rx="8" fill="#0284c7"/> <!-- Scrub Top -->
+            <circle cx="270" cy="135" r="3" fill="#0f172a"/>
+            <circle cx="290" cy="135" r="3" fill="#0f172a"/>
+            <path d="M 275 150 Q 280 156 285 150" stroke="#0f172a" stroke-width="2" fill="none"/>
+            <!-- Stethoscope -->
+            <path d="M 260 170 Q 280 200 300 170" stroke="#fbbf24" stroke-width="3" fill="none"/>
+
+            <!-- Computer Monitor (Exposed to lobby) -->
+            <rect x="360" y="130" width="90" height="65" rx="6" fill="#0f172a" stroke="#e11d48" stroke-width="3" class="pulse-glow"/>
+            <rect x="395" y="195" width="20" height="15" fill="#475569"/>
+            <rect x="385" y="210" width="40" height="5" fill="#64748b"/>
+            <!-- EHR text on screen -->
+            <rect x="368" y="138" width="74" height="6" fill="#38bdf8" rx="2"/>
+            <rect x="368" y="148" width="55" height="4" fill="#cbd5e1" rx="1"/>
+            <rect x="368" y="156" width="65" height="4" fill="#cbd5e1" rx="1"/>
+            <text x="405" y="180" fill="#f43f5e" font-size="9" font-weight="bold" text-anchor="middle">PHI EXPOSED</text>
+
+            <!-- Patient Charts on Counter -->
+            <rect x="200" y="215" width="45" height="30" rx="3" fill="#f59e0b" transform="rotate(-5 200 215)"/>
+            <text x="210" y="232" fill="#78350f" font-size="8" font-weight="bold">CONFIDENTIAL</text>
+
+            <!-- Arriving Patient Character -->
+            <circle cx="560" cy="170" r="26" fill="#fed7aa"/>
+            <rect x="535" y="196" width="50" height="90" rx="8" fill="#64748b"/>
+            <circle cx="552" cy="165" r="3" fill="#0f172a"/>
+            <circle cx="568" cy="165" r="3" fill="#0f172a"/>
+
+            <!-- Speech Bubble -->
+            <rect x="440" y="85" width="160" height="45" rx="10" fill="#ffffff" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"/>
+            <polygon points="530,130 540,145 545,130" fill="#ffffff"/>
+            <text x="520" y="105" fill="#0f172a" font-size="11" font-weight="bold" text-anchor="middle">"Hi! I'm here for my</text>
+            <text x="520" y="120" fill="#0f172a" font-size="11" font-weight="bold" text-anchor="middle">appointment..."</text>
+          </svg>
+        `;
+      } else if (type === "elevator") {
+        svgHtml = `
+          <svg viewBox="0 0 700 400" class="w-full h-full max-h-[320px]" xmlns="http://www.w3.org/2000/svg">
+            <rect width="700" height="400" fill="#0f172a"/>
+            <!-- Elevator Interior Frame -->
+            <rect x="100" y="40" width="500" height="320" rx="12" fill="#1e293b" stroke="#64748b" stroke-width="6"/>
+            <rect x="110" y="50" width="480" height="40" fill="#334155"/>
+            <text x="350" y="75" fill="#f8fafc" font-size="16" font-weight="bold" text-anchor="middle">FLOOR 3 • PUBLIC ELEVATOR</text>
+
+            <!-- Crowd in Elevator -->
+            <!-- Visitor 1 -->
+            <circle cx="200" cy="180" r="25" fill="#fcd34d"/>
+            <rect x="175" y="205" width="50" height="110" rx="6" fill="#475569"/>
+            
+            <!-- Doctor Vance -->
+            <circle cx="320" cy="170" r="26" fill="#fed7aa"/>
+            <rect x="295" y="196" width="50" height="120" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/> <!-- White Lab Coat -->
+            <path d="M 310 196 L 320 220 L 330 196" stroke="#0284c7" stroke-width="3" fill="none"/>
+            <text x="320" y="150" fill="#38bdf8" font-size="10" font-weight="bold" text-anchor="middle">Dr. Vance</text>
+
+            <!-- Alex (MA) -->
+            <circle cx="430" cy="175" r="25" fill="#fbcfe8"/>
+            <rect x="405" y="200" width="50" height="115" rx="6" fill="#0284c7"/>
+            <text x="430" y="150" fill="#a7f3d0" font-size="10" font-weight="bold" text-anchor="middle">Alex (MA)</text>
+
+            <!-- Visitor 2 -->
+            <circle cx="520" cy="185" r="24" fill="#fca5a5"/>
+            <rect x="495" y="209" width="50" height="105" rx="6" fill="#6b7280"/>
+
+            <!-- Floating Gossip Audio Wave Indicator -->
+            <rect x="240" y="90" width="220" height="45" rx="10" fill="#ef4444" class="pulse-glow"/>
+            <text x="350" y="110" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">"Mrs. Gable's biopsy was</text>
+            <text x="350" y="125" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">malignant this morning..."</text>
+          </svg>
+        `;
+      } else if (type === "ehr") {
+        svgHtml = `
+          <svg viewBox="0 0 700 400" class="w-full h-full max-h-[320px]" xmlns="http://www.w3.org/2000/svg">
+            <rect width="700" height="400" fill="#020617"/>
+            <!-- Computer Terminal Interface -->
+            <rect x="120" y="30" width="460" height="300" rx="16" fill="#0f172a" stroke="#0284c7" stroke-width="4"/>
+            <rect x="120" y="30" width="460" height="40" rx="16" fill="#1e293b"/>
+            <text x="145" y="55" fill="#38bdf8" font-size="14" font-weight="bold">MEDICLOUD EHR • AUDIT LOGGER</text>
+            <circle cx="540" cy="50" r="6" fill="#22c55e"/>
+            
+            <!-- Patient Header (VIP) -->
+            <rect x="140" y="85" width="420" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+            <text x="155" y="105" fill="#fbbf24" font-size="12" font-weight="bold">PATIENT: J. CARTER (VIP / CELEBRITY ATHLETE)</text>
+            <text x="155" y="122" fill="#94a3b8" font-size="10">DOB: 04/12/1992 • MRN: #88492-A • Status: Admitted</text>
+
+            <!-- Audit Trail Log Warning -->
+            <rect x="140" y="150" width="420" height="150" rx="8" fill="#090d16" stroke="#334155" stroke-width="1"/>
+            <text x="155" y="175" fill="#f43f5e" font-size="11" font-weight="bold">SYSTEM AUDIT TRAIL LOGGING ACTIVE:</text>
+            <text x="155" y="198" fill="#cbd5e1" font-size="10" font-family="monospace">> 14:21:05 - USER_ID: MA_ALEX (Terminal #04)</text>
+            <text x="155" y="218" fill="#cbd5e1" font-size="10" font-family="monospace">> Direct Treatment Relationship: NONE FOUND</text>
+            <text x="155" y="238" fill="#fbbf24" font-size="10" font-family="monospace">> WARNING: Unauthorized Record Lookup is Logged for OCR Audit</text>
+
+            <!-- Peer Pressure Speech Bubble -->
+            <rect x="250" y="295" width="200" height="35" rx="8" fill="#ffffff" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.5))"/>
+            <text x="350" y="317" fill="#0f172a" font-size="11" font-weight="bold" text-anchor="middle">"Go ahead and open it!"</text>
+          </svg>
+        `;
+      } else if (type === "transmission") {
+        svgHtml = `
+          <svg viewBox="0 0 700 400" class="w-full h-full max-h-[320px]" xmlns="http://www.w3.org/2000/svg">
+            <rect width="700" height="400" fill="#0f172a"/>
+            <!-- Sending Office Box -->
+            <rect x="80" y="100" width="200" height="180" rx="12" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/>
+            <text x="180" y="130" fill="#38bdf8" font-size="13" font-weight="bold" text-anchor="middle">OAKRIDGE CLINIC</text>
+            <rect x="120" y="160" width="120" height="80" rx="6" fill="#334155"/>
+            <text x="180" y="195" fill="#cbd5e1" font-size="10" text-anchor="middle">EHR Workstation</text>
+            <text x="180" y="215" fill="#a7f3d0" font-size="9" text-anchor="middle">256-Bit SSL Ready</text>
+
+            <!-- Transmission Path -->
+            <line x1="280" y1="190" x2="420" y2="190" stroke="#f59e0b" stroke-width="4" stroke-dasharray="8 6"/>
+            
+            <!-- Lock Icon on Transmission -->
+            <circle cx="350" cy="190" r="22" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+            <text x="350" y="196" fill="#fbbf24" font-size="16" text-anchor="middle">🔒</text>
+
+            <!-- Receiving Specialist Box -->
+            <rect x="420" y="100" width="200" height="180" rx="12" fill="#1e293b" stroke="#10b981" stroke-width="3"/>
+            <text x="520" y="130" fill="#10b981" font-size="13" font-weight="bold" text-anchor="middle">SPECIALIST PARTNER</text>
+            <rect x="460" y="160" width="120" height="80" rx="6" fill="#334155"/>
+            <text x="520" y="195" fill="#cbd5e1" font-size="10" text-anchor="middle">Secure Direct Fax</text>
+            <text x="520" y="215" fill="#a7f3d0" font-size="9" text-anchor="middle">BAA Agreement On File</text>
+
+            <!-- Bottom Warning Note -->
+            <rect x="180" y="310" width="340" height="40" rx="8" fill="#1e293b" stroke="#e11d48" stroke-width="2"/>
+            <text x="350" y="335" fill="#fda4af" font-size="11" font-weight="bold" text-anchor="middle">NEVER USE UNENCRYPTED PERSONAL SMS / SOCIAL APPS</text>
+          </svg>
+        `;
+      } else if (type === "shredder") {
+        svgHtml = `
+          <svg viewBox="0 0 700 400" class="w-full h-full max-h-[320px]" xmlns="http://www.w3.org/2000/svg">
+            <rect width="700" height="400" fill="#0f172a"/>
+            <rect y="300" width="700" height="100" fill="#1e293b"/>
+
+            <!-- Locked Cross-Cut Shredder Console -->
+            <rect x="240" y="100" width="220" height="220" rx="14" fill="#1e293b" stroke="#10b981" stroke-width="4"/>
+            <rect x="270" y="125" width="160" height="12" rx="4" fill="#020617"/>
+            <!-- Slot entry -->
+            <line x1="280" y1="131" x2="420" y2="131" stroke="#22c55e" stroke-width="3"/>
+
+            <!-- Paper entering shredder -->
+            <rect x="300" y="80" width="100" height="50" rx="3" fill="#ffffff" stroke="#cbd5e1"/>
+            <text x="350" y="105" fill="#0f172a" font-size="9" font-weight="bold" text-anchor="middle">MRN #4492</text>
+
+            <!-- Lock on Bin -->
+            <circle cx="350" cy="200" r="28" fill="#0f172a" stroke="#10b981" stroke-width="2"/>
+            <text x="350" y="208" fill="#34d399" font-size="20" text-anchor="middle">🔐</text>
+            <text x="350" y="250" fill="#a7f3d0" font-size="11" font-weight="bold" text-anchor="middle">LOCKED SHREDDER BIN</text>
+            <text x="350" y="270" fill="#64748b" font-size="9" text-anchor="middle">HIPAA Destruction Certified</text>
+
+            <!-- Regular Wastebasket (Red Crossout) -->
+            <rect x="520" y="210" width="90" height="110" rx="8" fill="#334155" stroke="#ef4444" stroke-width="3"/>
+            <line x1="510" y1="200" x2="620" y2="330" stroke="#ef4444" stroke-width="5"/>
+            <line x1="620" y1="200" x2="510" y2="330" stroke="#ef4444" stroke-width="5"/>
+            <text x="565" y="350" fill="#f87171" font-size="10" font-weight="bold" text-anchor="middle">NO PHI IN TRASH</text>
+          </svg>
+        `;
+      }
+
+      container.innerHTML = svgHtml;
+    }
+
+    /* ==========================================================
+       SCENE CONTROLLER & PLAYBACK ENGINE
+       ========================================================== */
+    function loadScene(idx) {
+      currentSceneIdx = idx;
+      const scene = scenes[idx];
+
+      // Update Labels
+      document.getElementById("videoRecLabel").textContent = `REC • SCENE ${idx + 1}/5`;
+      document.getElementById("sceneLocation").textContent = scene.location;
+      document.getElementById("safeguardCategory").textContent = scene.safeguard;
+      document.getElementById("dialogueSubtitle").textContent = `"${scene.subtitle}"`;
+
+      // Update Chip Active States
+      for (let i = 0; i < 5; i++) {
+        const chip = document.getElementById(`chip${i}`);
+        if (i === idx) {
+          chip.className = "px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold";
+        } else {
+          chip.className = "px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200";
+        }
+      }
+
+      // Render Visual
+      renderSceneVisual(scene.svgType);
+
+      // Speak narration
+      speakNarration(scene.narration);
+
+      // Reset Video Stage Overlays
+      document.getElementById("decisionModal").classList.add("hidden");
+      document.getElementById("consequenceOverlay").classList.add("hidden");
+
+      // Set Progress Bar
+      const progressPercent = ((idx + 1) / scenes.length) * 100;
+      document.getElementById("videoProgressBar").style.width = `${progressPercent}%`;
+      document.getElementById("timeCode").textContent = `00:${String((idx + 1) * 25).padStart(2, '0')} / 02:05`;
+
+      // Trigger Decision Modal after short delay (to let video scene establish)
+      setTimeout(() => {
+        showDecisionModal(scene);
+      }, 1800);
+    }
+
+    function showDecisionModal(scene) {
+      pauseVideo();
+      const modal = document.getElementById("decisionModal");
+      const promptEl = document.getElementById("decisionPrompt");
+      const optionsContainer = document.getElementById("decisionOptions");
+
+      promptEl.textContent = scene.prompt;
+      optionsContainer.innerHTML = "";
+
+      scene.choices.forEach((choice, cIdx) => {
+        const btn = document.createElement("button");
+        btn.className = "p-3 rounded-2xl bg-slate-900/90 hover:bg-indigo-950/80 border-2 border-slate-700 hover:border-indigo-400 text-left text-xs font-semibold text-slate-200 hover:text-white transition flex flex-col justify-between group active:scale-98";
+        btn.innerHTML = `
+          <span class="leading-relaxed">${choice.text}</span>
+          <span class="text-[10px] font-mono-code text-slate-500 group-hover:text-indigo-300 mt-2 flex items-center gap-1">
+            <span>Select Action</span>
+            <i data-lucide="chevron-right" class="w-3 h-3"></i>
+          </span>
+        `;
+        btn.onclick = () => handleChoiceSelection(choice);
+        optionsContainer.appendChild(btn);
+      });
+
+      modal.classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function handleChoiceSelection(choice) {
+      document.getElementById("decisionModal").classList.add("hidden");
+      const consequenceOverlay = document.getElementById("consequenceOverlay");
+      const iconBox = document.getElementById("consequenceIconBox");
+      const titleEl = document.getElementById("consequenceTitle");
+      const textEl = document.getElementById("consequenceText");
+
+      if (choice.correct) {
+        playTone("success");
+        if (typeof confetti === "function") {
+          confetti({
+            particleCount: 70,
+            spread: 60,
+            origin: { y: 0.6 }
+          });
+        }
+        iconBox.className = "w-16 h-16 rounded-3xl bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mb-3 text-3xl";
+        iconBox.textContent = "🛡️";
+        titleEl.className = "text-xl sm:text-2xl font-black text-emerald-400";
+        titleEl.textContent = choice.title;
+        textEl.textContent = choice.feedback;
+
+        // Log Resolution
+        addIncidentLog(scenes[currentSceneIdx].title, "Compliant Action Taken", "resolved");
+        updateSafeguardStatus(scenes[currentSceneIdx].safeguardKey, true);
+        speakNarration(`Excellent! ${choice.feedback}`, "success");
+
+      } else {
+        playTone("error");
+        totalScore = Math.max(0, totalScore - 20);
+        totalFines += choice.penalty;
+        updateScoreboard();
+
+        iconBox.className = "w-16 h-16 rounded-3xl bg-rose-500/20 border-2 border-rose-500 text-rose-400 flex items-center justify-center mb-3 text-3xl";
+        iconBox.textContent = "⚠️";
+        titleEl.className = "text-xl sm:text-2xl font-black text-rose-400";
+        titleEl.textContent = `${choice.title} (+$${choice.penalty.toLocaleString()} Fine)`;
+        textEl.textContent = choice.feedback;
+
+        addIncidentLog(scenes[currentSceneIdx].title, `Violation: +$${choice.penalty.toLocaleString()} Penalty`, "violation");
+        speakNarration(`Warning! HIPAA Violation detected. ${choice.feedback}`, "violation");
+      }
+
+      consequenceOverlay.classList.remove("hidden");
+    }
+
+    function continueVideoPlayback() {
+      document.getElementById("consequenceOverlay").classList.add("hidden");
+      if (currentSceneIdx < scenes.length - 1) {
+        loadScene(currentSceneIdx + 1);
+      } else {
+        showCompletionScreen();
+      }
+    }
+
+    function showCompletionScreen() {
+      pauseVideo();
+      const completionOverlay = document.getElementById("completionOverlay");
+      document.getElementById("finalScoreText").textContent = `${totalScore}%`;
+      document.getElementById("finalFinesText").textContent = `$${(150000 - totalFines).toLocaleString()}`;
+      completionOverlay.classList.remove("hidden");
+      speakNarration("Outstanding work! You have successfully mastered all five interactive HIPAA video chapters and protected patient confidentiality.", "success");
+      playTone("success");
+    }
+
+    /* ==========================================================
+       SCOREBOARD & INCIDENT LOGS
+       ========================================================== */
+    function updateScoreboard() {
+      document.getElementById("scoreDisplay").textContent = `${totalScore}%`;
+      document.getElementById("penaltyDisplay").textContent = `$${totalFines.toLocaleString()}`;
+      if (totalScore < 80) {
+        document.getElementById("scoreDisplay").className = "text-xs font-bold text-rose-400 font-mono-code";
+      }
+    }
+
+    function addIncidentLog(title, outcome, status) {
+      const container = document.getElementById("incidentLogList");
+      const emptyMsg = container.querySelector(".italic");
+      if (emptyMsg) emptyMsg.remove();
+
+      const item = document.createElement("div");
+      const isResolved = status === "resolved";
+      item.className = `p-2.5 rounded-xl border ${isResolved ? 'bg-emerald-950/40 border-emerald-800 text-emerald-200' : 'bg-rose-950/40 border-rose-800 text-rose-200'} flex items-center justify-between text-xs`;
+      item.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <i data-lucide="${isResolved ? 'check-circle' : 'alert-triangle'}" class="w-4 h-4 ${isResolved ? 'text-emerald-400' : 'text-rose-400'}"></i>
+          <div>
+            <p class="font-bold text-white text-[11px]">${title}</p>
+            <p class="text-[10px] text-slate-400">${outcome}</p>
+          </div>
+        </div>
+        <span class="text-[9px] font-mono-code px-2 py-0.5 rounded ${isResolved ? 'bg-emerald-900 text-emerald-300' : 'bg-rose-900 text-rose-300'} font-bold">${isResolved ? 'COMPLIANT' : 'BREACH'}</span>
+      `;
+      container.prepend(item);
+      lucide.createIcons();
+
+      const totalItems = container.children.length;
+      document.getElementById("incidentCount").textContent = `${totalItems} / 5 Logged`;
+    }
+
+    function updateSafeguardStatus(key, active) {
+      if (key === "physical") {
+        document.getElementById("statPhysical").textContent = "Enforced";
+        document.getElementById("statPhysical").className = "text-[10px] font-mono-code text-emerald-400 font-bold";
+      } else if (key === "technical") {
+        document.getElementById("statTechnical").textContent = "Enforced";
+        document.getElementById("statTechnical").className = "text-[10px] font-mono-code text-emerald-400 font-bold";
+      } else if (key === "admin") {
+        document.getElementById("statAdmin").textContent = "Enforced";
+        document.getElementById("statAdmin").className = "text-[10px] font-mono-code text-emerald-400 font-bold";
+      }
+    }
+
+    /* ==========================================================
+       PLAYBACK CONTROLS
+       ========================================================= */
+    function togglePlayPause() {
+      isPlaying = !isPlaying;
+      const icon = document.getElementById("playIcon");
+      if (isPlaying) {
+        icon.setAttribute("data-lucide", "pause");
+        // resume scene
+      } else {
+        icon.setAttribute("data-lucide", "play");
+        pauseVideo();
+      }
+      lucide.createIcons();
+    }
+
+    function pauseVideo() {
+      isPlaying = false;
+      const icon = document.getElementById("playIcon");
+      if (icon) icon.setAttribute("data-lucide", "play");
+      lucide.createIcons();
+    }
+
+    function jumpToScene(idx) {
+      loadScene(idx);
+    }
+
+    function nextChapter() {
+      if (currentSceneIdx < scenes.length - 1) {
+        loadScene(currentSceneIdx + 1);
+      }
+    }
+
+    function prevChapter() {
+      if (currentSceneIdx > 0) {
+        loadScene(currentSceneIdx - 1);
+      }
+    }
+
+    function handleTimelineClick(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percent = clickX / rect.width;
+      const targetScene = Math.min(4, Math.floor(percent * 5));
+      loadScene(targetScene);
+    }
+
+    function toggleVoiceover() {
+      voiceEnabled = !voiceEnabled;
+      const icon = document.getElementById("voiceIcon");
+      const label = document.getElementById("voiceLabel");
+      if (voiceEnabled) {
+        icon.setAttribute("data-lucide", "volume-2");
+        icon.className = "w-4 h-4 text-emerald-400";
+        label.textContent = "Voice ON";
+        speakNarration(scenes[currentSceneIdx].narration);
+      } else {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        icon.setAttribute("data-lucide", "volume-x");
+        icon.className = "w-4 h-4 text-rose-400";
+        label.textContent = "Voice OFF";
+      }
+      lucide.createIcons();
+    }
+
+    function resetSimulation() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      currentSceneIdx = 0;
+      totalScore = 100;
+      totalFines = 0;
+      updateScoreboard();
+      document.getElementById("incidentLogList").innerHTML = `
+        <div class="text-center py-6 text-slate-500 italic text-[11px]">
+          Watch the video chapters and make compliance decisions to log incidents.
+        </div>
+      `;
+      document.getElementById("incidentCount").textContent = "0 / 5 Resolved";
+      document.getElementById("completionOverlay").classList.add("hidden");
+      loadScene(0);
+    }
+
+    /* ==========================================================
+       CERTIFICATE SYSTEM
+       ========================================================== */
+    function printCertificate() {
+      const studentName = prompt("Enter student name for your HIPAA Certificate:", "Medical Assisting Student");
+      if (!studentName) return;
+      document.getElementById("certStudentName").textContent = studentName;
+      document.getElementById("certDate").textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById("certModal").classList.remove("hidden");
+    }
+
+    function closeCert() {
+      document.getElementById("certModal").classList.add("hidden");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initBestVoice();
+      loadScene(0);
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
